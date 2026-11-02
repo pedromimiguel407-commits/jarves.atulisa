@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101116">
+  <meta name="description" content="Instale o JARVES AI no computador ou celular e veja os pacotes disponíveis.">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+  <title>Baixar JARVES AI</title>
+  <style>
+    :root { color-scheme: dark; font: 16px/1.6 system-ui, sans-serif; color: #f3f0fa; background: #101116; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: radial-gradient(ellipse at 50% 0, #292044, #101116 48rem); }
+    a { color: #c8afff; }
+    .wrap { width: min(1050px, 100% - 32px); margin: 0 auto; padding: 28px 0 64px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .brand { color: #fff; font-weight: 800; font-size: 1.15rem; text-decoration: none; letter-spacing: .06em; }
+    .back { border: 1px solid #ffffff35; border-radius: 10px; padding: 8px 13px; text-decoration: none; }
+    .hero { padding: clamp(42px, 8vw, 88px) 0 30px; text-align: center; }
+    .eyebrow { color: #c8afff; font-size: .75rem; font-weight: 700; letter-spacing: .16em; }
+    h1 { margin: 8px 0; font-size: clamp(2.2rem, 8vw, 4.5rem); line-height: 1.05; }
+    .intro { max-width: 650px; margin: 16px auto; color: #c5c1d0; }
+    .install { min-height: 46px; margin-top: 12px; border: 0; border-radius: 12px; padding: 10px 20px; color: #171322; background: #c5a6ff; font: inherit; font-weight: 750; cursor: pointer; }
+    .install:disabled { cursor: default; opacity: .7; }
+    .notice { margin: 26px auto; padding: 16px 18px; border: 1px solid #ba8f56; border-radius: 12px; color: #f7ddb7; background: #5a3d1929; text-align: left; }
+    .notice strong { display: block; margin-bottom: 4px; color: #ffe1ad; }
+    .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 24px; }
+    article { display: flex; flex-direction: column; align-items: flex-start; padding: 20px; border: 1px solid #ffffff20; border-radius: 16px; background: #191821dd; }
+    article h2 { margin: 4px 0 8px; font-size: 1.2rem; }
+    article p { margin: 4px 0 14px; color: #c5c1d0; }
+    .badge { border-radius: 999px; padding: 3px 9px; color: #d3c4f7; background: #9c7bd32b; font-size: .75rem; font-weight: 700; }
+    article a { margin-top: auto; font-weight: 700; }
+    code { overflow-wrap: anywhere; border-radius: 5px; padding: 2px 5px; background: #09090d; color: #e2d4ff; }
+    .requirements { margin-top: 28px; padding: 20px; border: 1px solid #ffffff20; border-radius: 16px; background: #191821dd; }
+    .requirements h2 { margin-top: 0; }
+    .requirements li { margin: 7px 0; color: #c5c1d0; }
+    #install-status { min-height: 1.5em; color: #c5c1d0; }
+    footer { margin-top: 26px; color: #9691a2; font-size: .88rem; text-align: center; }
+    @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } header { align-items: flex-start; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; } }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <a class="brand" href="/">JARVES AI</a>
+      <a class="back" href="/">Abrir o app</a>
+    </header>
+    <section class="hero">
+      <p class="eyebrow">DOWNLOADS · WINDOWS · LINUX · ANDROID</p>
+      <h1>Leve o JARVES<br>com você.</h1>
+      <p class="intro">Use o JARVES no navegador ou instale como aplicativo web. A IA funciona com Ollama e modelos locais gratuitos no computador que hospeda o servidor.</p>
+      <button class="install" id="install-app" type="button" hidden>Instalar JARVES</button>
+      <p id="install-status" role="status" aria-live="polite">A instalação como app web depende de o JARVES estar aberto em HTTPS ou em localhost.</p>
+    </section>
+
+    <aside class="notice">
+      <strong>Sobre os instaladores nativos</strong>
+      APK/AAB, EXE/MSI, AppImage e DEB ainda não foram compilados nem publicados. Esta página não oferece arquivos falsos: por enquanto, use a versão web/PWA ou instale a partir do código-fonte.
+    </aside>
+
+    <section class="grid" aria-label="Opções de instalação">
+      <article>
+        <span class="badge">ANDROID</span>
+        <h2>Celular e tablet</h2>
+        <p>Abra o endereço HTTPS do servidor no Chrome e escolha <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong>. Para usar a IA, o computador com Ollama e JARVES precisa continuar ligado e acessível.</p>
+        <p>APK e AAB não disponíveis nesta versão.</p>
+        <a href="/">Abrir JARVES no celular →</a>
+      </article>
+      <article>
+        <span class="badge">WINDOWS</span>
+        <h2>PC e notebook</h2>
+        <p>Abra o endereço HTTPS no Edge ou Chrome e use o ícone de instalação do navegador para criar um app web. Para executar localmente, use o código-fonte e as instruções do projeto.</p>
+        <p>EXE e MSI não disponíveis nesta versão.</p>
+        <a href="/">Abrir JARVES no PC →</a>
+      </article>
+      <article>
+        <span class="badge">LINUX</span>
+        <h2>Linux</h2>
+        <p>Use o JARVES pelo navegador ou instale como app web em HTTPS. Para executar o servidor, o código-fonte requer Python, as dependências do projeto e Ollama.</p>
+        <p>AppImage e DEB não disponíveis nesta versão.</p>
+        <a href="/">Abrir JARVES no Linux →</a>
+      </article>
+    </section>
+
+    <section class="requirements">
+      <h2>Como usar IA local sem pagar API</h2>
+      <ol>
+        <li>Instale o <a href="https://ollama.com/download" target="_blank" rel="noreferrer">Ollama</a> no computador que executará a IA.</li>
+        <li>Baixe um modelo local, por exemplo <code>ollama pull qwen3.5:4b</code>. O modelo e o espaço em disco são baixados no computador.</li>
+        <li>Inicie o servidor JARVES nesse computador e abra o endereço mostrado pelo servidor no navegador do seu dispositivo.</li>
+      </ol>
+      <p>O uso local não cobra chamadas de API; requer hardware compatível. Licenças e termos de uso dos modelos variam. O celular não acessa automaticamente o Ollama do PC: ambos precisam estar configurados para a mesma rede/endereço.</p>
+    </section>
+    <footer>O instalador PWA é o próprio site; não é um APK, EXE, AppImage ou pacote nativo.</footer>
+  </main>
+  <script>
+    let installPrompt;
+    const installButton = document.querySelector('#install-app');
+    const installStatus = document.querySelector('#install-status');
+    window.addEventListener('beforeinstallprompt', (event) => {
+      event.preventDefault();
+      installPrompt = event;
+      installButton.hidden = false;
+    });
+    installButton.addEventListener('click', async () => {
+      if (!installPrompt) {
+        installStatus.textContent = 'Este navegador não oferece instalação automática aqui. Abra o menu do navegador e escolha “Instalar app” ou “Adicionar à tela inicial”; use HTTPS ou localhost.';
+        return;
+      }
+      installButton.disabled = true;
+      try {
+        await installPrompt.prompt();
+        const choice = await installPrompt.userChoice;
+        installStatus.textContent = choice.outcome === 'accepted'
+          ? 'Instalação confirmada pelo navegador.'
+          : 'Instalação cancelada; você ainda pode usar o JARVES no navegador.';
+        installPrompt = null;
+        installButton.hidden = true;
+      } catch (error) {
+        installStatus.textContent = `Não foi possível iniciar a instalação: ${error.message}`;
+      } finally {
+        installButton.disabled = false;
+      }
+    });
+    window.addEventListener('appinstalled', () => {
+      installStatus.textContent = 'JARVES instalado como aplicativo web.';
+      installButton.hidden = true;
+    });
+    if ('serviceWorker' in navigator && window.isSecureContext) {
+      navigator.serviceWorker.register('/sw.js').catch((error) => {
+        installStatus.textContent = `O modo offline não pôde ser preparado: ${error.message}`;
+      });
+    }
+  </script>
+</body>
+</html>
