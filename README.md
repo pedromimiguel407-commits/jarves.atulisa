@@ -1,302 +1,75 @@
-# JARVES AI
+# JARVES AI 2.3.7 — GitHub + Android
 
-Assistente de IA gratuito e open source, com interface web e inferência local pelo
-[Ollama](https://ollama.com/). O JARVES AI é o aplicativo de orquestração: os
-modelos são instalados separadamente e executados na máquina do usuário.
+Repositorio-fonte preparado a partir do pacote Windows enviado.
 
-> **Estado do projeto:** MVP funcional em desenvolvimento. O chat prioriza modelos
-> Ollama locais sem custo de API (incluindo `qwen3.5:4b` quando instalado), com OpenAI remota opcional. Inclui testador HTML isolado, gerenciador/anexos TXT e PDF,
-> correção de TXT pelo modelo escolhido, voz do navegador, foto de fundo e PWA.
-> Não há aplicativo Android nativo nem empacotadores desktop. Este repositório não
-> foi publicado no GitHub por esta entrega.
+## O que há aqui
+- Aplicação web JARVES (frontend HTML/CSS/JS + backend Node/Express).
+- Relatório técnico de auditoria em TXT e JSON.
+- Testes smoke e verificação de sintaxe JavaScript.
+- Cliente Android WebView em `android/`.
+- GitHub Actions compilam APK, EXE e AppImage como artefatos. Ao enviar uma tag `v*`, os três arquivos são anexados à Release correspondente no GitHub.
+- **Arquivos e código** importa arquivos locais e baixa arquivos de links HTTP/HTTPS públicos; os bytes são preservados e os downloads respeitam o limite configurado para uploads.
 
-O painel **Configurações** permite escolher tema automático (preferência do sistema), escuro, claro ou neon RGB, cor de
-destaque, criatividade, limite de tokens por resposta e instruções personalizadas.
-As preferências ficam no navegador; temas podem ser importados/exportados em JSON
-com uma lista permitida apenas de aparência e cor, sem credenciais. Por padrão, a API envia os parâmetros de
-geração ao Ollama local. O JARVES também oferece OpenAI como opção remota quando
-`OPENAI_API_KEY` está configurada no servidor. O JARVES não inclui nem declara
-integração com um serviço chamado “Codex 6.1”.
-Para tarefas de código, instale e selecione um modelo de programação compatível no
-Ollama (por exemplo, `qwen2.5-coder:7b`) e confira a licença e os requisitos do
-modelo antes de usar.
-
-O botão de perfil permite salvar nome de exibição, nome de usuário local, avatar
-ou foto, e cor de destaque. A foto é recortada e comprimida no navegador para
-256×256 e fica no IndexedDB; os demais dados são armazenados no `localStorage`.
-Salvar, cancelar e restaurar são ações explícitas. Este perfil não é uma conta:
-não há senha, autenticação, sincronização ou tradução completa da interface.
-
-## Core e memória local
-
-O chat mantém memória de curto prazo pelo histórico da conversa e oferece uma
-**Memória** local que o usuário salva, pesquisa, exporta, importa e exclui. Cada
-solicitação só consulta essa memória quando **Usar memória** está marcado; no máximo
-três itens lexicalmente relevantes entram no contexto, identificados como dados não
-confiáveis. Isso é recuperação contextual, não treinamento nem aprendizagem dos
-pesos do modelo. Arquivos TXT/PDF permanecem uma fonte de conhecimento separada e
-precisam ser anexados explicitamente.
-
-## Salvamento automático e recuperação
-
-Conversas, mensagens, arquivos de texto extraídos e memórias ficam no SQLite do
-servidor (`JARVES_DATABASE`). A pergunta é gravada antes de iniciar a geração; se o
-modelo falhar, ela permanece no histórico sem uma resposta inventada. Configurações
-e tema ficam no armazenamento local do navegador e são gravados automaticamente
-após alterações; modo de resposta, modo rápido e uso de memória ficam em IndexedDB.
-Rascunhos do chat, código HTML e
-projetos de anime usam IndexedDB com debounce, migração versionada e até cinco
-versões anteriores por rascunho. O indicador no topo informa salvamento e falhas.
-Rascunhos de mensagens interrompidas são restaurados para revisão, nunca reenviados
-automaticamente; a última conversa aberta é retomada quando possível.
-
-Fotos de fundo e fotos de perfil permanecem no IndexedDB privado do navegador. O projeto pode exportar
-o storyboard de anime como JSON. Ainda não há backup completo do banco de dados,
-restauração global, sincronização entre dispositivos ou recuperação de anexos
-originais: arquivos importados são armazenados como texto extraído. Limpar os dados
-do navegador ou apagar o arquivo SQLite remove os respectivos dados locais.
-
-## Logic Engine
-
-A aba **Lógica** e `POST /api/logic/analyze` estruturam um pedido usando regras
-determinísticas: identificam intenção provável por palavras-chave, extraem itens
-explicitamente listados, sugerem modelos genéricos de etapas, apontam lacunas e
-pedem confirmação para ações potencialmente irreversíveis. Expressões aritméticas
-escritas diretamente são avaliadas por um parser restrito, sem `eval`. Esse módulo
-não prova fatos externos, não interpreta contradições semanticamente nem executa
-ferramentas. Nos modos **Plano em etapas** e **Diagnosticar bug**, suas sugestões
-entram no contexto do modelo como hipóteses revisáveis; o modelo local continua
-responsável pela resposta em linguagem natural.
-
-## Modos de resposta e velocidade
-
-No chat, selecione **Atender pedido**, **Plano em etapas**, **Pesquisa online** ou
-**Diagnosticar bug** para orientar a resposta. O modo de pesquisa consulta até
-cinco páginas da Wikipédia em português, exibe links das fontes e só é iniciado
-depois de confirmação: a pergunta é enviada à Wikipédia e esse modo precisa de
-internet. Os demais modos continuam locais.
-
-As respostas do chat são transmitidas em streaming: o texto aparece à medida que
-Ollama ou OpenAI o gera, em vez de aguardar a resposta completa. A pergunta é
-salva no histórico antes da geração; a resposta só é persistida após conclusão
-válida. Streaming melhora o tempo até o primeiro texto visível,
-mas não aumenta a velocidade de geração do modelo; latência e tokens por segundo
-dependem do modelo, do hardware e da rede.
-No chat local, o JARVES também desativa o raciocínio estendido do Ollama quando o
-modelo aceita essa opção, evitando consumir o limite de saída com conteúdo interno
-em vez da resposta visível.
-
-## Diagnóstico de erros
-
-A aba **Diagnóstico** captura erros JavaScript e falhas vistas pela interface,
-mantendo até 50 eventos somente no armazenamento local do navegador e removendo
-tokens reconhecíveis antes de salvá-los. **Analisar erros** consulta
-`GET /api/diagnostics`, que verifica a resposta da API, a integridade SQLite e a
-conexão/lista de modelos do Ollama, sem modificar dados ou reiniciar serviços.
-Chamadas GET da interface têm até duas tentativas adicionais com espera crescente;
-operações que alteram dados e gerações não são repetidas automaticamente. O relatório
-JSON é baixado sob solicitação.
-
-Endpoint:
-
-```http
-GET /api/diagnostics
-POST /api/diagnostics/test
-GET /api/health
-GET /api/ai/status
-POST /api/ai/chat
-POST /api/logic/analyze
-```
-
-Retorna um estado geral e verificações individuais de API, SQLite e Ollama, cada
-uma com status, evidência observada e próximo passo sugerido.
-`/api/ai/chat` é um alias compatível para o endpoint existente `/api/chat`; os
-dois preservam o mesmo formato, streaming e validações. A interface usa URLs
-relativas à origem em que foi aberta, permitindo acesso por IP/nome da máquina
-servidora na rede local, em vez de fixar `localhost` no navegador.
-
-O painel oferece diagnóstico e recomendações, não reparo automático de código,
-configuração, banco de dados ou processos. Faça backup e autorize alterações
-manualmente. A verificação não detecta problemas de GPU/memória do host nem substitui
-logs do sistema operacional.
-
-Na interface, o modo **Rápido** é opcional e vem desligado: quando ativado, mantém
-o modelo carregado por 10 minutos, envia menos histórico, usa contexto de 4.096
-tokens e limita cada resposta a 1.024 tokens. No modo normal, o limite padrão é
-4.096 tokens e pode ser ajustado nas configurações até 8.192; o modelo selecionado
-e a memória do dispositivo ainda determinam o máximo que pode ser gerado. Clientes
-da API que não enviam `fast_mode` preservam o limite de tokens configurado. O
-primeiro pedido ainda pode demorar enquanto o modelo carrega;
-modelos menores costumam ser mais rápidos, e o desempenho real depende do hardware
-e do modelo. O modo de diagnóstico também permite baixar o relatório em Markdown.
-
-## Imagens e modelos 3D
-
-A aba **Imagem e 3D IA** usa o modelo selecionado no Ollama para criar uma ilustração
-vetorial SVG ou uma malha Wavefront OBJ a partir de uma descrição. Os arquivos são
-gerados localmente e podem ser baixados. A ilustração SVG também pode ser convertida
-localmente no navegador e baixada como PNG; o OBJ tem uma prévia 3D interativa no
-navegador e pode ser aberto em um editor compatível, como o Blender. Isso não instala
-ou baixa modelos extras, mas também não é geração fotorrealista nem usa um modelo
-especializado de 3D: a qualidade e a validade do resultado dependem do modelo de
-linguagem local. Para reduzir a espera, a geração usa o modo sem raciocínio longo do
-Ollama (quando aceito pelo modelo), contexto de 1.536 tokens e limite de saída de
-768 tokens. Uma saída SVG inválida recebe no máximo uma nova tentativa de correção,
-continuando sujeita à sanitização. O tempo da geração concluída é medido pelo
-servidor e mostrado na tela; não é uma promessa de duração futura. Se o modelo
-demorar mais de 90 segundos, a interface informa o timeout e sugere uma descrição
-mais simples ou um modelo menor. Verifique a licença do modelo antes de redistribuir
-o conteúdo.
-
-## Arquivos, voz e instalação
-
-- Anexe ou gerencie arquivos `.txt` e `.pdf` pelo chat e pela aba **Gerenciar arquivos**.
-  Limite de 5 MB por arquivo, 100 arquivos guardados e 100 páginas por PDF. O texto
-  extraído fica em SQLite local; o binário original não é retido. PDF escaneado sem
-  camada de texto não é reconhecido. “Corrigir com IA” usa o modelo local escolhido.
-- Pesquise conversas pelo título ou conteúdo e renomeie conversas pelo histórico lateral.
-- A aba **Testar HTML** renderiza código em um `iframe` isolado, bloqueando acesso ao
-  chat e conexões externas do conteúdo testado. O botão **Jogar exemplo** carrega um
-  jogo de pegar estrelas, jogável com teclado ou controles de toque, que pode ser
-  editado e baixado como arquivo HTML.
-- Leia respostas com voz do sistema; vozes disponíveis dependem do navegador e do OS.
-  O ditado pergunta antes de iniciar e pode enviar áudio ao fornecedor de voz do
-  navegador. Não é uma transcrição offline garantida.
-- Na aba **Estúdio Anime**, Ollama pode gerar um storyboard textual editável a partir
-  da descrição. **Gerar animação do texto** interpreta o prompt localmente sem
-  depender de um modelo, permite escolher entre seis ambientes e oito movimentos
-  e reproduz uma cena procedural com deslocamento suave, pose de personagem e
-  efeitos visuais em Canvas 2D. A opção Ollama gera separadamente um storyboard
-  editável. Personagem, cenário, legenda, ambiente, movimento e duração de 5–30
-  segundos podem ser editados e salvos no projeto. Ao alterar a descrição, os
-  seletores de ambiente e movimento voltam à detecção automática; sem legenda
-  personalizada, o texto da descrição é usado como legenda da cena.
-  Quando o navegador suporta
-  `MediaRecorder`/WebM, a cena é exportada como arquivo WebM real sem áudio. Também
-  é possível baixar uma animação independente em HTML/CSS, sem dependências
-  externas. O rascunho é salvo localmente e mantém até cinco versões anteriores.
-  Isto não é
-  geração de vídeo por IA; episódios de 25 minutos, múltiplas cenas montadas,
-  sincronização labial e voz incorporada ainda não estão implementados.
-- Em **Usar vídeo existente**, abra um vídeo local e reproduza uma narração com as
-  vozes do dispositivo, velocidade e volume ajustáveis. O vídeo não é enviado ao
-  servidor e a narração não é incorporada ao arquivo.
-- Para o testador HTML funcionar sem servidor/modelo, acesse uma vez enquanto online
-  e deixe o service worker guardar a interface. O chat ainda precisa do Jarves e do
-  Ollama em execução, mesmo sem internet.
-- No Android, Chrome ou outro navegador compatível pode oferecer **Instalar app**.
-  Em desktop/Linux, use o menu do navegador para instalar a PWA. Isso instala a
-  interface web; não compila um APK/EXE/AppImage e não instala Ollama no telefone.
-- A página `/downloads.html` mostra as opções reais de instalação para Android,
-  Windows e Linux. APK/AAB, EXE/MSI, AppImage e DEB ainda não foram compilados nem
-  publicados; não há link de release nesta cópia do projeto.
-- A interface é responsiva em celular, desktop e Linux. Para outro dispositivo na
-  mesma rede, execute `./scripts/run-lan.sh` no computador que hospeda o Jarves.
-  O script gera um token temporário e mostra o endereço de rede; informe o token
-  em **Configurações → Token para acesso de outro dispositivo** no celular. Em
-  seguida, abra o endereço exibido nos dois dispositivos. Mantenha o computador,
-  o servidor e o Ollama ligados. No Windows, configure `JARVES_HOST=0.0.0.0` e
-  `JARVES_ACCESS_TOKEN` antes de iniciar o Uvicorn e abra o IP local do computador
-  (visível com `ipconfig`) no celular. O recurso funciona pelo navegador na rede
-  Wi-Fi local; instalar o PWA no celular exige HTTPS. A API exige token para
-  clientes remotos, mas o servidor não fornece HTTPS: use somente em rede
-  confiável, não use em Wi-Fi público nem encaminhe a porta para a internet.
-
-## Requisitos
-
-- Python 3.10 ou superior.
-- Ollama instalado e em execução para gerar respostas.
-- Um modelo baixado no Ollama; `ollama pull qwen3.5:4b` instala o modelo local
-  gratuito usado como padrão quando disponível. Licenças e termos de
-  redistribuição dependem do modelo escolhido.
-- Navegador moderno.
-
-O modelo e seu download não são incluídos no repositório. Tamanho, velocidade e
-qualidade dependem do modelo e do hardware disponível. Sem Ollama, a interface e a
-API iniciam, mas a geração de respostas não fica disponível.
-
-## Executar localmente
-
-Linux/macOS:
-
-Se o Ollama ainda não estiver em execução, inicie `ollama serve` em outro terminal
-antes de baixar o modelo.
+## Executar o servidor
+Requisitos: Node.js 22.13 ou superior.
 
 ```bash
-python3 -m venv .venv
-. .venv/bin/activate
-python -m pip install -r requirements.txt
-ollama pull qwen3.5:4b
-./scripts/run.sh
+npm install
+npm run check
+npm test
+HOST=0.0.0.0 npm start
 ```
 
-Para permitir acesso do seu celular pela mesma rede Wi-Fi, use `./scripts/run-lan.sh`;
-consulte a seção de compatibilidade e segurança antes de habilitar o acesso remoto.
+Abra `http://localhost:3000` no computador.
 
-Windows (PowerShell):
+## Android
+O APK é um cliente da interface web; ele não hospeda o backend Node/SQLite nem instala Ollama ou um modelo generativo no telefone. O backend e o provedor IA/Ollama continuam no PC/servidor.
+1. Inicie o JARVES no PC com `HOST=0.0.0.0 npm start` para habilitar o anúncio de descoberta na rede local.
+2. No Android, conecte-se à rede Wi-Fi em que o PC está. O APK procura automaticamente um servidor JARVES anunciado e valida `/api/health`.
+3. Na aba **Configurações** do APK, informe `http://<IP-do-PC>:3000` em **Servidor para este celular** e toque em **Validar e conectar**. O app confirma `/api/health`, salva o endereço e mostra o estado da conexão. Se a descoberta falhar, confira firewall e isolamento de clientes do roteador.
 
-```powershell
-py -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-ollama pull qwen3.5:4b
-python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
-```
+A descoberta usa mDNS (`_jarves._tcp`) e só é anunciada quando o backend escuta em todas as interfaces ou num endereço local privado. O APK não liga o Wi-Fi nem ingressa numa rede protegida; ambos os aparelhos precisam estar na mesma rede local e a rede deve permitir tráfego entre dispositivos. A versão desktop instalada mantém o backend limitado a `127.0.0.1`; para conectar o APK, inicie o servidor Node em modo LAN conforme o passo 1.
 
-No Linux/macOS, copie `.env.example` para `.env`, informe uma chave nova na
-variável `OPENAI_API_KEY` (sem aspas) e inicie com `./scripts/run.sh`. Proteja o
-arquivo com `chmod 600 .env`. No Windows, configure `OPENAI_API_KEY` nas
-variáveis de ambiente do Windows, abra um novo PowerShell e execute o Uvicorn
-como acima. Não coloque chaves no
-frontend, no repositório, em capturas de tela ou em mensagens. Chaves compartilhadas
-devem ser revogadas. A API OpenAI é um serviço externo, pode cobrar pelo uso e
-recebe as mensagens/anexos enviados ao modelo. O chat local via Ollama continua
-disponível sem chave; geração de imagem SVG/3D permanece local via Ollama.
+## IA sem cobrança por uso
+- Escolha **Ollama local** (ou **Automático**) em Configurações e instale um modelo compatível. A inferência fica no seu PC/servidor e não exige uma chave de API paga.
+- O download inicial precisa de internet e ocupa espaço em disco; a execução usa memória, processador/placa de vídeo e energia do seu equipamento. A licença de cada modelo pode variar.
+- Se Ollama não estiver disponível, Automático usa `jarves-base`, uma resposta offline básica e limitada, não um modelo generativo completo.
+- Provedores remotos compatíveis podem cobrar e exigem acesso próprio. **GPT-6.1 Sol** tem o identificador `gpt-6.1-sol`, suporta Chat Completions, mas é um modelo de API pago; ele só pode ser selecionado se o endpoint remoto configurado o listar. A lista de modelos é obtida dinamicamente, sem fingir suporte ou adicioná-lo como opção grátis. Consulte [documentação e preços oficiais](https://developers.openai.com/api/docs/models/gpt-6.1-sol).
 
-Abra <http://127.0.0.1:8000>. A documentação interativa da API fica em
-<http://127.0.0.1:8000/docs>.
+## Gerar APK pelo GitHub
+1. Crie um repositório no GitHub e envie todos os arquivos desta pasta.
+2. Abra **Actions** e execute **Build JARVES Android APK** (workflow_dispatch). Pushes com mudanças Android, frontend, backend ou motores de IA também compilam o APK como artefato do workflow.
+3. Baixe `JARVES-AI-2.3.7-Android-APK` na seção Artifacts da execução.
+4. Para publicar o APK em Releases, crie e envie uma tag `v2.3.7`:
+   `git tag v2.3.7 && git push origin v2.3.7`
 
-Configurações opcionais podem ser definidas por variáveis de ambiente:
+A página de downloads está em `/download.html` quando o servidor JARVES está em execução. O workflow **Publish JARVES downloads site** publica a mesma página como site estático no GitHub Pages e a atualiza em pushes para `main`. Ela consulta o release mais recente e só mostra botões quando encontra os assets reais `app-debug.apk`, `JARVES-AI-Setup-<versão>-x64.exe` e `JARVES-AI-<versão>-x86_64.AppImage`. Os workflows de Android, Windows e Linux anexam seus instaladores à Release quando uma tag `v*` é enviada. O APK é uma compilação de depuração; o EXE não é assinado.
 
-| Variável | Padrão | Descrição |
-|---|---|---|
-| `JARVES_OLLAMA_URL` | `http://127.0.0.1:11434` | Endereço do Ollama |
-| `JARVES_OLLAMA_KEEP_ALIVE` | `10m` | Tempo para manter o modelo carregado entre pedidos |
-| `JARVES_MODEL` | primeiro modelo instalado | Modelo selecionado inicialmente |
-| `JARVES_DATABASE` | `data/jarves.db` | Caminho do histórico SQLite |
-| `JARVES_HOST` | `127.0.0.1` | Endereço local do servidor |
-| `JARVES_PORT` | `8000` | Porta HTTP |
-| `JARVES_ACCESS_TOKEN` | vazio | Token de acesso exigido de clientes não locais |
-| `OPENAI_API_KEY` | vazio | Chave opcional do backend para modelos OpenAI; mantenha em `.env` local ou ambiente seguro |
+## Gerar instalador Windows
+- Execute `npm ci` e `npm run build:windows` em Windows com Node.js 22.13+. O instalador NSIS será criado em `dist/`.
+- O workflow **Build JARVES Windows EXE** compila o instalador em cada push que altera o app e o publica como artefato do Actions; tags `v*` também o anexam à Release correspondente.
+- O instalador ainda não tem assinatura de código; o Windows pode mostrar avisos do SmartScreen.
 
-O servidor é vinculado ao loopback por padrão. Para acesso pela rede local, gere
-um segredo privado e configure o mesmo valor no ambiente do servidor e em
-**Configurações → Token para acesso de outro dispositivo**. O token fica salvo no
-localStorage do navegador. Sem esse segredo, clientes que não são locais recebem
-HTTP 403. Use apenas em rede confiável; o servidor não fornece TLS/HTTPS.
+## Gerar AppImage para Linux
+- Requer Node.js 22.13+; execute `npm ci` e `npm run build:linux` para criar `dist/JARVES-AI-2.3.7-x86_64.AppImage`.
+- O workflow **Build JARVES Linux AppImage** gera o mesmo pacote x86_64, publica-o como artefato do Actions e o anexa à Release nas tags `v*`.
+- Os pacotes Electron incluem o diretório `executor/`, usado pelo provedor de IA, e usam ícones de aplicativo específicos para Linux e Windows. O APK inclui ícones de launcher em todas as densidades Android.
 
-## Testes
+## Interface, voz e correção assistida
+- O Chat reúne acesso ao Gerador, Voz e vídeo, Testes HTML, Relatórios, Agentes, Tarefas, Arquivos, Memória e Configurações no painel **Ferramentas**.
+- A opção **Unificar conversas** cria um Chat unificado com cópias cronológicas das mensagens de todos os históricos, incluindo o nome de origem; as conversas originais permanecem intactas. Pode ser usada novamente para acrescentar mensagens novas sem duplicar as já importadas.
+- O botão **Voz** no Chat transcreve pedidos e aceita os comandos “enviar”, “limpar texto”, “novo chat” e “parar resposta”. No Android usa o reconhecedor do sistema após pedir permissão de microfone; no navegador depende do suporte e do serviço de voz instalado. O reconhecimento pode exigir internet e não é garantidamente offline; pedidos ditados são transcritos para revisão antes de enviar, exceto quando a pessoa diz “enviar”.
+- Em Configurações é possível personalizar nome da IA, cor principal, efeito RGB, tema, voz/idioma e velocidade/tom da síntese de fala disponíveis no dispositivo. Essas preferências ficam neste dispositivo; síntese e reconhecimento não alteram a voz textual do modelo.
+- Também é possível carregar uma imagem PNG/JPG/WebP de até 5 MB, que é recortada e reduzida para 256×256 antes de ser guardada localmente e exibida como avatar da IA. No APK, Configurações também permite alternar entre dois ícones de launcher incluídos no pacote; imagens enviadas mudam o avatar dentro do app, mas não recompilam o ícone instalado.
+- A aba Voz e vídeo lê texto com a voz instalada, pode reproduzir junto um vídeo local e exporta o roteiro como TXT. O vídeo não é enviado, mas a voz não é incorporada/exportada no MP4; não existe um motor local de geração/edição de vídeo nesta versão.
+- Em **Arquivos e código**, o app importa arquivos do dispositivo e baixa arquivos de links HTTP/HTTPS públicos para o armazenamento local do JARVES. O download da rede usa o limite configurado para uploads; bloqueia loopback, IPs privados/locais e domínios que resolvam para esses endereços, limita redirecionamentos e não executa o conteúdo. Os bytes são gravados em fluxo para não carregar todo o arquivo na memória. Downloads e exportações mantêm os bytes originais.
+- A aba **Testes HTML** executa verificações locais da interface e consulta diagnósticos do servidor; **Relatórios** mostra o último resumo e permite exportar TXT/JSON. É possível fornecer um arquivo de texto/código nas Configurações para preparar uma solicitação de análise no Chat. A IA sugere correções em texto; não executa código nem modifica arquivos automaticamente.
+- O **Gerador** cria imagens vetoriais SVG 2D offline, malhas geométricas simples em OBJ/MTL e GLB, e um visualizador HTML local que gira o modelo ao arrastar. Para imagens rasterizadas geradas por IA, escolha **IA de imagem local (Automatic1111/Forge)** e configure um servidor local compatível com a API de Stable Diffusion WebUI; inicie-o com a API habilitada (por exemplo, `--api`). O JARVES encaminha o pedido ao computador/servidor configurado e oferece o PNG para baixar ou salvar. Não há cobrança por API nem chamada a serviço de nuvem, mas é preciso instalar o motor, baixar um modelo e ter recursos de hardware e energia; modelos podem ter licenças diferentes. Por segurança, o endereço só pode ser HTTP em loopback ou rede privada. Ollama local pode escolher a forma/cor ou gerar HTML; se não estiver disponível, o gerador informa a limitação e usa o modo offline. A geração de malhas continua procedural e limitada a cubo, esfera, cilindro e cone. A prévia de HTML usa iframe sandbox e não executa no contexto principal do app.
+- O fluxo de criação em Configurações encadeia pesquisa web opcional, geração de plano, confirmação e execução manual de etapas de IA. A pesquisa é desativada por padrão e envia a consulta ao DuckDuckGo quando ativada; o modelo usa o provedor selecionado. Etapas produzem conteúdo/código para revisão, não executam comandos nem compilam aplicativos; blocos HTML podem ser pré-visualizados em iframe isolado.
+- Provedores locais Ollama evitam cobrança por chamada, mas usam hardware local e podem exigir baixar modelos; uma IA remota ou voz não instalada não é tornada gratuita por esta interface.
+- Grok não foi adicionado como opção “100% grátis”: a [API oficial xAI](https://docs.x.ai/developers/pricing) publica cobrança por tokens e por imagem. A geração local incluída não chama essa API.
 
-```bash
-python -m pip install -r requirements-dev.txt
-python -m unittest discover -s tests -v
-node --check frontend/app.js
-```
-
-## Estrutura
-
-- `backend/`: API FastAPI e integração com Ollama.
-- `frontend/`: interface web estática responsiva.
-- `models/`: notas sobre instalação e licenças de modelos externos.
-- `plugins/`: convenções para futuras integrações.
-- `documentation/`: arquitetura, instalação e roadmap.
-- `tests/`: testes da API e utilitários.
-- `configuration/`: configuração de exemplo.
-- `scripts/`: inicialização e utilitários de desenvolvimento.
-
-## Licença e contribuições
-
-O código deste projeto está sob a licença MIT. Modelos, Ollama e demais componentes
-externos mantêm suas próprias licenças; verifique-as antes de baixar ou redistribuir.
-Leia [CONTRIBUTING.md](CONTRIBUTING.md) para contribuir e [SECURITY.md](SECURITY.md)
-para reportar problemas de segurança.
+## Limites conhecidos
+- O APK de depuração é compilado pelo GitHub Actions com Java 17, Android SDK e Gradle 8.9.
+- O EXE Windows não foi executado neste ambiente Linux.
+- Não é correto afirmar que todos os bugs foram eliminados. Consulte `RELATORIO_ERROS_CORRECOES.txt`.

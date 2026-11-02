@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080d1a">
+  <title>Downloads · JARVES AI</title>
+  <style>
+    :root{color-scheme:dark;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#080d1a;color:#eaf0ff}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 50% 0,#26346a 0,transparent 58%),#080d1a}
+    main{width:min(100%,680px);padding:clamp(22px,6vw,48px);background:#10182a;border:1px solid #293754;border-radius:22px;box-shadow:0 24px 80px #0007}
+    .eyebrow{color:#36d6c2;font-size:11px;font-weight:700;letter-spacing:2px}
+    h1{font-size:clamp(30px,7vw,46px);margin:10px 0}
+    p{color:#aab7ce;line-height:1.65}
+    .download-card{margin:26px 0;padding:20px;background:#151f34;border:1px solid #344360;border-radius:15px}
+    .download-card h2{font-size:20px;margin:0 0 8px}
+    .button{display:inline-flex;align-items:center;justify-content:center;min-height:46px;margin-top:8px;padding:0 18px;border:0;border-radius:10px;background:#7787ff;color:white;font-weight:700;text-decoration:none}
+    .button[hidden]{display:none}
+    .status{font-size:13px;color:#b8c5dd}
+    .status[data-state="error"]{color:#ffb4bc}
+    .secondary{color:#8e9cff;font-size:13px}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+  </style>
+</head>
+<body>
+  <main>
+    <p class="eyebrow">JARVES AI · DOWNLOADS</p>
+    <h1>Baixe o JARVES</h1>
+    <p>Baixe os instaladores publicados no GitHub. Os botões aparecem somente quando há arquivos reais disponíveis para a versão.</p>
+
+    <section class="download-card" aria-labelledby="update-title">
+      <h2 id="update-title">Novidades da versão v2.3.7</h2>
+      <p>A v2.3.7 permite baixar PDFs, imagens, áudio, vídeo, ZIP e outros arquivos de links públicos diretamente em Arquivos e código. Os downloads preservam os bytes originais e bloqueiam endereços de rede privados.</p>
+      <p class="status">Os botões abaixo mostram somente arquivos reais da versão mais recente publicada. O APK permanece cliente WebView e depende do backend JARVES ligado em um PC/servidor.</p>
+      <a class="secondary" href="https://github.com/pedromimiguel407-commits/jarve-apk-2.0/releases" target="_blank" rel="noopener noreferrer">Ver releases e estado dos builds no GitHub ↗</a>
+    </section>
+
+    <section class="download-card" aria-labelledby="android-title">
+      <h2 id="android-title">Android · APK de teste</h2>
+      <p id="releaseDetails" class="status" role="status" aria-live="polite">Consultando releases publicados…</p>
+      <a id="apkDownload" class="button" hidden>Baixar APK</a>
+      <p class="status">Este APK de depuração pode exibir avisos de instalação. É um cliente WebView: precisa de um backend JARVES ligado em um PC/servidor acessível pela rede. O APK não hospeda o backend nem executa o Ollama no Android.</p>
+      <p><a id="allReleases" class="secondary" href="https://github.com/pedromimiguel407-commits/jarve-apk-2.0/releases" target="_blank" rel="noopener noreferrer">Ver releases no GitHub ↗</a></p>
+    </section>
+
+    <section class="download-card" aria-labelledby="desktop-title">
+      <h2 id="desktop-title">Windows EXE</h2>
+      <p id="exeReleaseDetails" class="status" role="status" aria-live="polite">Consultando releases publicados…</p>
+      <a id="exeDownload" class="button" hidden>Baixar instalador Windows</a>
+      <p class="status">O instalador não tem assinatura de código; o Windows pode mostrar um aviso do SmartScreen.</p>
+    </section>
+
+    <section class="download-card" aria-labelledby="linux-title">
+      <h2 id="linux-title">Linux · AppImage</h2>
+      <p id="linuxReleaseDetails" class="status" role="status" aria-live="polite">Consultando releases publicados…</p>
+      <a id="linuxDownload" class="button" hidden>Baixar AppImage</a>
+      <p class="status">Pacote x86_64. Pode ser necessário permitir a execução do arquivo nas propriedades do sistema.</p>
+    </section>
+
+  </main>
+  <script>
+    const repository = 'pedromimiguel407-commits/jarve-apk-2.0';
+    const status = document.getElementById('releaseDetails');
+    const download = document.getElementById('apkDownload');
+    const exeStatus = document.getElementById('exeReleaseDetails');
+    const exeDownload = document.getElementById('exeDownload');
+    const linuxStatus = document.getElementById('linuxReleaseDetails');
+    const linuxDownload = document.getElementById('linuxDownload');
+    const releasesLink = document.getElementById('allReleases');
+    releasesLink.href = `https://github.com/${repository}/releases`;
+    function showDownload(asset, link) {
+      if (!asset || typeof asset.browser_download_url !== 'string') return false;
+      try {
+        const url = new URL(asset.browser_download_url);
+        if (url.protocol !== 'https:' || url.hostname !== 'github.com') return false;
+        link.href = url.href;
+        link.download = asset.name;
+        link.hidden = false;
+        return true;
+      } catch { return false; }
+    }
+    fetch(`https://api.github.com/repos/${repository}/releases/latest`, {
+      headers: { Accept: 'application/vnd.github+json' },
+      cache: 'no-store',
+    }).then(async response => {
+      if (!response.ok) throw new Error(response.status === 404 ? 'Nenhum release publicado com APK ainda.' : `GitHub respondeu HTTP ${response.status}.`);
+      return response.json();
+    }).then(release => {
+      const apk = (release.assets || []).find(asset => asset.name === 'app-debug.apk' && typeof asset.browser_download_url === 'string');
+      const exe = (release.assets || []).find(asset => /^JARVES-AI-Setup-.+-x64\.exe$/i.test(asset.name) && typeof asset.browser_download_url === 'string');
+      const appImage = (release.assets || []).find(asset => /^JARVES-AI-.+-x86_64\.AppImage$/i.test(asset.name) && typeof asset.browser_download_url === 'string');
+      const publishedDate = release.published_at ? new Date(release.published_at).toLocaleDateString('pt-BR') : 'data indisponível';
+      const versionLabel = `Versão ${release.tag_name} · ${publishedDate}`;
+      status.textContent = showDownload(apk, download)
+        ? `${versionLabel} · APK disponível.`
+        : `${versionLabel} · este release ainda não tem APK.`;
+      exeStatus.textContent = showDownload(exe, exeDownload)
+        ? `${versionLabel} · instalador disponível.`
+        : `${versionLabel} · este release ainda não tem instalador Windows.`;
+      linuxStatus.textContent = showDownload(appImage, linuxDownload)
+        ? `${versionLabel} · AppImage disponível.`
+        : `${versionLabel} · este release ainda não tem AppImage.`;
+    }).catch(error => {
+      status.dataset.state = 'error';
+      status.textContent = `${error.message} Execute o workflow de APK e publique uma tag v* para disponibilizar o download.`;
+      exeStatus.dataset.state = 'error';
+      exeStatus.textContent = 'Nenhum instalador publicado em um Release.';
+      linuxStatus.dataset.state = 'error';
+      linuxStatus.textContent = 'Nenhum AppImage publicado em um Release.';
+    });
+  </script>
+</body>
+</html>

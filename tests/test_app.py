@@ -100,9 +100,16 @@ class JarvesApiTests(unittest.TestCase):
         downloads = self.client.get("/downloads.html")
         self.assertEqual(downloads.status_code, 200)
         self.assertIn('id="install-app"', downloads.text)
-        self.assertIn("APK e AAB não disponíveis", downloads.text)
-        self.assertIn("EXE e MSI não disponíveis", downloads.text)
-        self.assertIn("AppImage e DEB não disponíveis", downloads.text)
+        self.assertIn('id="downloads-android"', downloads.text)
+        self.assertIn('id="downloads-windows"', downloads.text)
+        self.assertIn('id="downloads-linux"', downloads.text)
+        self.assertIn('class="download-icon apk-icon"', downloads.text)
+        self.assertIn('class="download-icon exe-icon"', downloads.text)
+        self.assertIn('class="download-icon appimage-icon"', downloads.text)
+        self.assertIn("<span>APK</span>", downloads.text)
+        self.assertIn("<span>EXE</span>", downloads.text)
+        self.assertIn("<span>APPIMAGE</span>", downloads.text)
+        self.assertIn("api.github.com/repos/${repository}/releases", downloads.text)
 
     def test_diagnostics_reports_database_and_ollama_health(self) -> None:
         with patch.object(main, "list_installed_models", return_value=[{"name": "local-model"}]):

@@ -850,6 +850,13 @@ async function downloadSvgAsPng(svg) {
   }
 }
 
+function closeMobileSidebar() {
+  document.querySelector('#sidebar').classList.remove('open');
+  const menuButton = document.querySelector('#mobile-menu');
+  menuButton.setAttribute('aria-expanded', 'false');
+  menuButton.setAttribute('aria-label', 'Abrir menu');
+}
+
 function showView(viewId) {
   for (const view of document.querySelectorAll('.tab-view')) {
     const active = view.id === viewId;
@@ -859,7 +866,7 @@ function showView(viewId) {
   for (const button of document.querySelectorAll('.tool-nav-button')) {
     button.classList.toggle('active', button.dataset.view === viewId);
   }
-  document.querySelector('#sidebar').classList.remove('open');
+  closeMobileSidebar();
   if (viewId === 'files-view') refreshFiles();
   if (viewId === 'memory-view') refreshMemories();
   if (viewId === 'html-view') {
@@ -1544,7 +1551,7 @@ async function loadConversation(id) {
     for (const message of data.messages) addMessage(message.role, message.content);
     welcome.hidden = true;
     messages.classList.add('active');
-    document.querySelector('#sidebar').classList.remove('open');
+    closeMobileSidebar();
   } catch (error) {
     if (generation === conversationGeneration) showToast(error.message);
   } finally {
@@ -1830,7 +1837,7 @@ document.querySelector('#new-chat').addEventListener('click', () => {
   syncComposer();
   showWelcome();
   showView('chat-view');
-  document.querySelector('#sidebar').classList.remove('open');
+  closeMobileSidebar();
   messageInput.focus();
 });
 document.querySelector('#history-search').addEventListener('input', () => {
@@ -2138,8 +2145,20 @@ modelSelect.addEventListener('change', () => {
     showToast('Não foi possível salvar o modelo selecionado.');
   }
 });
-document.querySelector('#mobile-menu').addEventListener('click', () => {
-  document.querySelector('#sidebar').classList.toggle('open');
+document.querySelector('#mobile-menu').addEventListener('click', (event) => {
+  const sidebar = document.querySelector('#sidebar');
+  const isOpen = sidebar.classList.toggle('open');
+  event.currentTarget.setAttribute('aria-expanded', String(isOpen));
+  event.currentTarget.setAttribute('aria-label', isOpen ? 'Fechar menu' : 'Abrir menu');
+});
+document.querySelector('.app-shell').addEventListener('click', (event) => {
+  const sidebar = document.querySelector('#sidebar');
+  const menuButton = document.querySelector('#mobile-menu');
+  if (!sidebar.classList.contains('open') || sidebar.contains(event.target) || menuButton.contains(event.target)) return;
+  closeMobileSidebar();
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') closeMobileSidebar();
 });
 document.querySelectorAll('.tool-nav-button').forEach((button) => {
   button.addEventListener('click', () => showView(button.dataset.view));
