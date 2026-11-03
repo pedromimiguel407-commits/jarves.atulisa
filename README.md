@@ -129,4 +129,4 @@ O núcleo local prioriza ferramentas gratuitas e abertas. Baixar modelos e execu
 - Endpoints remotos exigem token Bearer quando o cliente não é loopback.
 - O gerador de imagens aceita somente endpoint HTTP em localhost ou IP privado configurado no servidor.
 
-Consulte [Arquitetura](documentation/architecture.md), [Instalação](documentation/installation.md) e [Segurança](SECURITY.md).
+Consulte [Arquitetura](documentation/architecture.md), [Instalação](documentation/installation.md), [Segurança](SECURITY.md) e o [Relatório de evolução beta](RELATORIO_EVOLUCAO_BETA.md).
