@@ -125,7 +125,7 @@ class JarvesApiTests(unittest.TestCase):
         health = self.client.get("/api/health")
         with patch.object(main, "list_installed_models", return_value=[{"name": "local-model"}]):
             ai_status = self.client.get("/api/ai/status")
-        self.assertEqual(health.json(), {"status": "ok", "service": "jarves-api"})
+        self.assertEqual(health.json(), {"status": "ok", "service": "jarves-api", "version": "2.3.7"})
         self.assertEqual(ai_status.status_code, 200)
         self.assertEqual(ai_status.json()["ollama"], "connected")
         self.assertEqual(ai_status.json()["models"], ["local-model"])
