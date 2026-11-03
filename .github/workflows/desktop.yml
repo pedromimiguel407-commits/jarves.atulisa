@@ -64,6 +64,31 @@ jobs:
       - name: Build Windows installer
         if: matrix.target == 'windows'
         run: npm run build:windows
+      - name: Verify Windows installer and create SHA-256
+        if: matrix.target == 'windows'
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem -Path dist -Filter '*.exe' -File | Sort-Object Length -Descending | Select-Object -First 1
+          if (-not $installer) { throw 'Nenhum instalador EXE foi gerado.' }
+          if ($installer.Length -lt 50000000) { throw "O instalador parece incompleto: $($installer.Length) bytes." }
+          $stream = [System.IO.File]::OpenRead($installer.FullName)
+          try {
+            $reader = [System.IO.BinaryReader]::new($stream)
+            if ([System.Text.Encoding]::ASCII.GetString($reader.ReadBytes(2)) -ne 'MZ') { throw 'Assinatura DOS/PE inválida.' }
+            $stream.Position = 60
+            $peOffset = $reader.ReadInt32()
+            if ($peOffset -lt 64 -or $peOffset -gt ($stream.Length - 4)) { throw 'Cabeçalho PE fora dos limites.' }
+            $stream.Position = $peOffset
+            $peSignature = [System.Text.Encoding]::ASCII.GetString($reader.ReadBytes(4))
+            if ($peSignature -ne [string]([char]80 + [char]69 + [char]0 + [char]0)) { throw 'Assinatura PE inválida.' }
+          } finally { $stream.Dispose() }
+          $hash = (Get-FileHash -Path $installer.FullName -Algorithm SHA256).Hash
+          Set-Content -Path "$($installer.FullName).sha256" -Value "$hash  $($installer.Name)" -Encoding ascii
+          $signature = Get-AuthenticodeSignature -FilePath $installer.FullName
+          if ($signature.Status -eq 'HashMismatch') { throw 'O hash Authenticode do EXE não confere.' }
+          if ($signature.Status -eq 'NotSigned') { Write-Warning 'EXE sem assinatura Authenticode: o Windows pode exibir o SmartScreen.' }
+          Write-Host "EXE validado: $($installer.Name) ($($installer.Length) bytes)"
+          Write-Host "SHA-256: $hash"
       - name: Build Linux AppImage
         if: matrix.target == 'linux'
         run: npm run build:linux
@@ -72,9 +97,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: JARVES-Windows-EXE-${{ github.sha }}
-          path: dist/*.exe
+          path: |
+            dist/*.exe
+            dist/*.sha256
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 30
       - name: Upload Linux AppImage
         if: matrix.target == 'linux'
         uses: actions/upload-artifact@v4
