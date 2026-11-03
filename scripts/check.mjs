@@ -10,6 +10,7 @@ const required = [
   'backend/app/main.py',
   'frontend/index.html',
   'frontend/app.js',
+  'frontend/images-studio.js',
   'frontend/styles.css',
   'frontend/manifest.webmanifest',
   'android/settings.gradle',
