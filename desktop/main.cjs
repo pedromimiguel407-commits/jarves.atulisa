@@ -86,8 +86,13 @@ function createWindow(url) {
     },
   });
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  const localOrigin = new URL(url).origin;
   mainWindow.webContents.on('will-navigate', (event, target) => {
-    if (!target.startsWith(url)) event.preventDefault();
+    try {
+      if (new URL(target).origin !== localOrigin) event.preventDefault();
+    } catch {
+      event.preventDefault();
+    }
   });
   mainWindow.once('ready-to-show', () => mainWindow.show());
   mainWindow.loadURL(url);
