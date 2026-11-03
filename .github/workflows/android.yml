@@ -44,6 +44,22 @@ jobs:
           gradle-version: "8.9"
       - name: Build debug APK
         run: gradle --no-daemon -p android assembleDebug
+      - name: Test APK on Android 15 emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_2
+          script: |
+            adb logcat -c
+            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            adb shell am start -W -n com.jarves.ai/.DefaultLauncher
+            sleep 8
+            adb shell dumpsys activity activities | grep -E "mResumedActivity|topResumedActivity" | grep -q "com.jarves.ai"
+            if adb logcat -d | grep -E "FATAL EXCEPTION|Process: com.jarves.ai.*has died"; then
+              echo "JARVES encerrou com erro no emulador Android."
+              exit 1
+            fi
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
