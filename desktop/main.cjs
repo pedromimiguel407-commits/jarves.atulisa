@@ -11,13 +11,17 @@ let shuttingDown = false;
 let backendUrl = null;
 
 function reservePort() {
+  const requestedPort = Number.parseInt(process.env.JARVES_PORT || '0', 10);
+  const port = Number.isInteger(requestedPort) && requestedPort > 0 && requestedPort <= 65535
+    ? requestedPort
+    : 0;
   return new Promise((resolve, reject) => {
     const server = net.createServer();
     server.once('error', reject);
-    server.listen(0, '127.0.0.1', () => {
+    server.listen(port, '127.0.0.1', () => {
       const address = server.address();
-      const port = address && typeof address === 'object' ? address.port : 8000;
-      server.close((error) => error ? reject(error) : resolve(port));
+      const actualPort = address && typeof address === 'object' ? address.port : 8000;
+      server.close((error) => error ? reject(error) : resolve(actualPort));
     });
   });
 }
@@ -116,8 +120,10 @@ async function start() {
     backend.stderr.on('data', (chunk) => console.error(String(chunk).trimEnd()));
     backend.on('error', (error) => console.error('Falha ao iniciar backend:', error.message));
     await waitForBackend(url);
+    console.log('JARVES backend ready at', url);
     createWindow(url);
   } catch (error) {
+    console.error('JARVES desktop startup failed:', error);
     await dialog.showMessageBox({
       type: 'error',
       title: 'JARVES AI — não foi possível iniciar',
