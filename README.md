@@ -1,4 +1,4 @@
-# JARVES AI 2.3.7
+# JARVES AI 2.3.9
 
 Assistente local em português brasileiro, com interface web responsiva, backend FastAPI/Python, inferência local opcional pelo Ollama e cliente Android WebView.
 
