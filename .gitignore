@@ -1,0 +1,39 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Node and desktop builds
+node_modules/
+dist/
+build/backend/
+release/
+*.log
+
+# Local databases and generated data (existing tracked files are not removed)
+data/*.db
+data/*.db-*
+data/.jarves-secret
+data/generated-images/
+
+# Android / Gradle
+.gradle/
+android/.gradle/
+android/local.properties
+android/**/build/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
