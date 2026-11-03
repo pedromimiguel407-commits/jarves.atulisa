@@ -1217,7 +1217,7 @@ def generate_image_batch(payload: ImageBatchRequest) -> dict[str, Any]:
             raw = base64.b64decode(encoded, validate=True)
         except (ValueError, base64.binascii.Error):
             continue
-        if len(raw) > MAX_GENERATED_IMAGE_BYTES or not raw.startswith(b"\\x89PNG\\r\\n\\x1a\\n"):
+        if len(raw) > MAX_GENERATED_IMAGE_BYTES or not raw.startswith(b"\x89PNG\r\n\x1a\n"):
             continue
         image_id = str(uuid.uuid4())
         filename = f"{image_id}.png"
