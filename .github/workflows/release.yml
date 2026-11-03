@@ -144,6 +144,9 @@ jobs:
             exit 1
           fi
           python -c "import json; d=json.load(open('/tmp/jarves-health.json')); assert d.get('status') == 'ok' and d.get('version') == '2.3.9', d; print('Linux AppImage smoke test OK:', d)"
+          curl --fail --silent --show-error "http://127.0.0.1:18765/" -o /tmp/jarves-index.html
+          grep -qi "JARVES" /tmp/jarves-index.html
+          echo "Linux UI homepage loaded successfully."
           kill -0 "$APP_PID"
       - name: Upload Windows installer
         if: matrix.target == 'windows'
