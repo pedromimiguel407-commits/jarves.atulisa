@@ -126,19 +126,24 @@ jobs:
           test -n "$APPIMAGE" && chmod +x "$APPIMAGE"
           "$APPIMAGE" --appimage-extract >/tmp/jarves-extract.log 2>&1
           test -x squashfs-root/AppRun
-          xvfb-run -a env ELECTRON_DISABLE_GPU=1 ./squashfs-root/AppRun --no-sandbox >/tmp/jarves-smoke.log 2>&1 &
+          xvfb-run -a env JARVES_PORT=18765 ELECTRON_DISABLE_GPU=1 ./squashfs-root/AppRun --no-sandbox >/tmp/jarves-linux-smoke.log 2>&1 &
           APP_PID=$!
           trap 'kill "$APP_PID" 2>/dev/null || true; pkill -f "[J]ARVESBackend" 2>/dev/null || true' EXIT
-          PORT=""
+          HEALTH_OK=0
           for attempt in $(seq 1 60); do
-            PORT="$(sed -n 's/.*Uvicorn running on http:\/\/127\.0\.0\.1:\([0-9][0-9]*\).*/\1/p' /tmp/jarves-smoke.log | head -n 1)"
-            if [ -n "$PORT" ]; then break; fi
-            if ! kill -0 "$APP_PID" 2>/dev/null; then cat /tmp/jarves-smoke.log; exit 1; fi
+            if curl --fail --silent --show-error "http://127.0.0.1:18765/api/health" -o /tmp/jarves-health.json 2>/dev/null; then
+              HEALTH_OK=1
+              break
+            fi
+            if ! kill -0 "$APP_PID" 2>/dev/null; then cat /tmp/jarves-linux-smoke.log; exit 1; fi
             sleep 1
           done
-          test -n "$PORT" || { cat /tmp/jarves-smoke.log; exit 1; }
-          curl --fail --silent --show-error "http://127.0.0.1:$PORT/api/health" -o /tmp/jarves-health.json
-          python -c "import json; d=json.load(open('/tmp/jarves-health.json')); assert d.get('status')=='ok' and d.get('version')=='2.3.9', d; print('AppImage + API OK:', d)"
+          if [ "$HEALTH_OK" -ne 1 ]; then
+            cat /tmp/jarves-linux-smoke.log
+            echo "O backend embutido não respondeu na porta de teste 18765."
+            exit 1
+          fi
+          python -c "import json; d=json.load(open('/tmp/jarves-health.json')); assert d.get('status') == 'ok' and d.get('version') == '2.3.9', d; print('Linux AppImage smoke test OK:', d)"
           kill -0 "$APP_PID"
       - name: Upload Windows installer
         if: matrix.target == 'windows'
