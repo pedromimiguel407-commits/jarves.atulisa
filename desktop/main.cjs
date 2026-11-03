@@ -124,6 +124,10 @@ async function start() {
     createWindow(url);
   } catch (error) {
     console.error('JARVES desktop startup failed:', error);
+    if (process.env.JARVES_SMOKE_TEST === '1') {
+      app.exit(1);
+      return;
+    }
     await dialog.showMessageBox({
       type: 'error',
       title: 'JARVES AI — não foi possível iniciar',
