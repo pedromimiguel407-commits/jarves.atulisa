@@ -1099,6 +1099,10 @@ def image_api_base() -> str:
     parsed = urlsplit(IMAGE_API_URL)
     if parsed.scheme != "http" or not parsed.hostname or parsed.username or parsed.password or parsed.path not in ("", "/") or parsed.query or parsed.fragment:
         raise HTTPException(status_code=400, detail="JARVES_IMAGE_API_URL deve ser um endereço HTTP local válido.")
+    try:
+        parsed.port
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail="A porta de JARVES_IMAGE_API_URL é inválida.") from error
     hostname = parsed.hostname.casefold()
     if hostname != "localhost":
         try:
@@ -1156,12 +1160,13 @@ def image_generation_status() -> dict[str, Any]:
     try:
         image_api_base()
         models = image_api_request("/sdapi/v1/sd-models", timeout=4)
+        model_count = len(models) if isinstance(models, list) else 0
         return {
             "configured": True,
-            "connected": True,
+            "connected": model_count > 0,
             "provider": "Stable Diffusion WebUI / Forge",
-            "model_count": len(models) if isinstance(models, list) else 0,
-            "message": "Gerador local conectado.",
+            "model_count": model_count,
+            "message": "Gerador local conectado." if model_count else "Serviço respondeu, mas nenhum modelo/checkpoint foi detectado.",
         }
     except HTTPException as error:
         return {
