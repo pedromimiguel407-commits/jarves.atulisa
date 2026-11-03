@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080d1a"><title>JARVES AI · Mobile</title>
+<style>
+:root{color-scheme:dark;--bg:#080d1a;--panel:#111b30;--line:#263653;--text:#eef3ff;--muted:#9cabc5;--accent:#9c7cff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% 0,#25345b 0,transparent 40%),var(--bg);color:var(--text);font:16px system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh;padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom)}
+main{max-width:760px;margin:auto;padding:28px 0 40px}.brand{display:flex;align-items:center;gap:12px}.logo{width:48px;height:48px;border-radius:16px;background:linear-gradient(135deg,#8b5cf6,#22d3ee);display:grid;place-items:center;font-size:26px;font-weight:800;color:#07101e}.eyebrow{color:#a9b9d7;letter-spacing:.16em;font-size:11px;font-weight:800}.brand h1{margin:2px 0;font-size:24px}.intro{color:var(--muted);line-height:1.55;margin:24px 0}.status{border:1px solid #36517a;background:#101e35;padding:13px 15px;border-radius:14px;color:#b9d2ff;font-size:13px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0}.card{background:linear-gradient(145deg,#15223b,#10182a);border:1px solid var(--line);border-radius:18px;padding:18px;min-height:128px}.card .ico{font-size:25px}.card h2{font-size:16px;margin:10px 0 5px}.card p{font-size:12px;line-height:1.45;color:var(--muted);margin:0}.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;margin-top:14px}.panel h2{font-size:17px;margin:0 0 8px}.panel p{color:var(--muted);font-size:13px;line-height:1.5}.row{display:flex;gap:10px;flex-wrap:wrap}button{border:0;border-radius:13px;padding:13px 16px;font-weight:750;font-size:14px;background:var(--accent);color:#0b1020;min-height:46px}button.secondary{background:#233451;color:var(--text);border:1px solid #3b5072}textarea{width:100%;min-height:92px;resize:vertical;border:1px solid #344968;border-radius:12px;background:#091326;color:var(--text);padding:12px;font:inherit;margin:8px 0}small,.foot{color:var(--muted);font-size:12px;line-height:1.5}.saved{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:10px;color:#dbe7ff;font-size:13px}@media(max-width:420px){.grid{grid-template-columns:1fr}.brand h1{font-size:21px}}
+</style>
+</head>
+<body><main>
+<header class="brand"><div class="logo">J</div><div><div class="eyebrow">ASSISTENTE MOBILE</div><h1>JARVES AI</h1></div></header>
+<p class="intro">Seu menu abre diretamente no celular. Você pode guardar notas neste aparelho, usar o reconhecimento de voz do Android e, se quiser, conectar a uma API JARVES em outro dispositivo.</p>
+<div class="status" id="status">● Modo independente ativo · menu carregado no aparelho</div>
+<section class="grid">
+<article class="card"><div class="ico">📱</div><h2>Modo celular</h2><p>O menu e as notas funcionam sem computador e sem conexão com servidor.</p></article>
+<article class="card"><div class="ico">🎙️</div><h2>Voz do Android</h2><p>Use o serviço de reconhecimento de fala instalado no seu aparelho. Pode depender da disponibilidade do serviço e da internet.</p></article>
+<article class="card"><div class="ico">🗂️</div><h2>Notas locais</h2><p>Rascunhos guardados no armazenamento privado deste aplicativo.</p></article>
+<article class="card"><div class="ico">🔌</div><h2>API opcional</h2><p>Conecte a um servidor quando houver um disponível. O modo independente continua abrindo sem ele.</p></article>
+</section>
+<section class="panel"><h2>Bloco de notas local</h2><p>Estas notas ficam neste aplicativo, neste aparelho. Não são enviadas para nenhum servidor.</p><textarea id="note" maxlength="10000" placeholder="Escreva uma ideia, tarefa ou anotação..."></textarea><div class="row"><button id="save">Salvar nota</button><button class="secondary" id="read">Ler nota</button><button class="secondary" id="clear">Apagar</button></div><div class="saved" id="saved" aria-live="polite"></div></section>
+<section class="panel"><h2>Conectar a uma API JARVES</h2><p>Opcional. Só use se você já tiver um servidor/API disponível. O APK não precisa de computador para abrir o menu, mas a IA generativa do servidor ainda depende de um backend/modelo configurado.</p><div class="row"><button id="connect">Configurar conexão</button><button class="secondary" id="voice">Falar</button><button class="secondary" id="stop">Parar voz</button></div><p id="voiceStatus" role="status">Voz aguardando.</p></section>
+<p class="foot">Transparência: esta versão inclui um menu offline, notas locais e ponte para voz do Android. Ela ainda não inclui um modelo generativo offline dentro do APK. Não inicia sozinha ao ligar/reiniciar o aparelho; abra pelo ícone JARVES. O Android limita a abertura automática de telas em segundo plano.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id),key='jarves.mobile.note.v1';
+$('note').value=localStorage.getItem(key)||'';
+$('saved').textContent=$('note').value?'Nota carregada deste aparelho.':'Nenhuma nota salva.';
+$('save').onclick=()=>{localStorage.setItem(key,$('note').value);$('saved').textContent='Nota salva neste aparelho.'};
+$('read').onclick=()=>{$('saved').textContent=$('note').value||'A nota está vazia.'};
+$('clear').onclick=()=>{localStorage.removeItem(key);$('note').value='';$('saved').textContent='Nota apagada.'};
+$('connect').onclick=()=>{if(window.JarvesAndroid&&JarvesAndroid.openServerSettings)JarvesAndroid.openServerSettings();else $('status').textContent='Configuração de API nativa indisponível nesta execução.'};
+$('voice').onclick=()=>{if(window.JarvesAndroid&&JarvesAndroid.startVoiceRecognition){$('voiceStatus').textContent=JarvesAndroid.startVoiceRecognition('pt-BR')?'Solicitação de voz enviada ao Android.':'Reconhecimento de voz indisponível.'}else $('voiceStatus').textContent='Ponte de voz não disponível.'};
+$('stop').onclick=()=>{if(window.JarvesAndroid&&JarvesAndroid.stopVoiceRecognition)JarvesAndroid.stopVoiceRecognition();$('voiceStatus').textContent='Solicitação para parar enviada.'};
+window.jarvesNativeVoiceStatus=s=>{$('voiceStatus').textContent=({listening:'Ouvindo...',processing:'Processando fala...'}[s]||s)};
+window.jarvesNativeVoiceError=e=>{$('voiceStatus').textContent='Voz: '+e};
+window.jarvesNativeVoiceResult=t=>{$('note').value=($('note').value?$('note').value+'\n':'')+t;$('saved').textContent='Texto reconhecido. Toque em Salvar nota para guardar.'};
+</script></body></html>
