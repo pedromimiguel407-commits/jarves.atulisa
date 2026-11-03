@@ -1,75 +1,132 @@
-# JARVES AI 2.3.7 — GitHub + Android
+# JARVES AI 2.3.7
 
-Repositorio-fonte preparado a partir do pacote Windows enviado.
+Assistente local em português brasileiro, com interface web responsiva, backend FastAPI/Python, inferência local opcional pelo Ollama e cliente Android WebView.
 
-## O que há aqui
-- Aplicação web JARVES (frontend HTML/CSS/JS + backend Node/Express).
-- Relatório técnico de auditoria em TXT e JSON.
-- Testes smoke e verificação de sintaxe JavaScript.
-- Cliente Android WebView em `android/`.
-- GitHub Actions compilam APK, EXE e AppImage como artefatos. Ao enviar uma tag `v*`, os três arquivos são anexados à Release correspondente no GitHub.
-- **Arquivos e código** importa arquivos locais e baixa arquivos de links HTTP/HTTPS públicos; os bytes são preservados e os downloads respeitam o limite configurado para uploads.
+> **Estado desta versão:** desenvolvimento beta. Recursos só são considerados disponíveis quando a integração e os testes correspondentes são verificados. APK, EXE e AppImage são produzidos como artefatos de CI; não há publicação automática em Releases.
 
-## Executar o servidor
-Requisitos: Node.js 22.13 ou superior.
+## Arquitetura real
 
+- **Frontend:** HTML, CSS e JavaScript em `frontend/`.
+- **Backend:** FastAPI em `backend/app/main.py`, servido por Uvicorn.
+- **IA de texto:** Ollama local; integração remota opcional com OpenAI configurada no servidor.
+- **Persistência:** SQLite; caminho padrão `data/jarves.db`, alterável por `JARVES_DATABASE`.
+- **Android:** cliente WebView que se conecta ao backend em um computador/servidor na mesma rede.
+- **Desktop:** Electron inicia um backend Python empacotado; no modo de desenvolvimento usa Python instalado no sistema.
+
+Os módulos JavaScript legados em `ai/` e `backend/services/` não são o backend ativo. O backend ativo é FastAPI; não execute os serviços legados isoladamente.
+
+## Requisitos
+
+- Python 3.10 ou superior.
+- Node.js 22.13 ou superior para scripts npm e empacotamento desktop.
+- Ollama opcional para respostas generativas locais.
+- Java 17 e Gradle/Android SDK para compilar Android manualmente; o workflow GitHub configura o ambiente.
+- Para o instalador desktop, PyInstaller empacota o backend Python antes do Electron.
+
+## Iniciar no computador
+
+Linux:
 ```bash
-npm install
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -r requirements.txt
+npm ci
 npm run check
 npm test
-HOST=0.0.0.0 npm start
+npm start
 ```
 
-Abra `http://localhost:3000` no computador.
+Windows PowerShell:
+```powershell
+py -3 -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+npm ci
+npm run check
+npm test
+npm start
+```
+
+Abra `http://127.0.0.1:8000`. Se Python não estiver no PATH, defina `JARVES_PYTHON` com o executável correto. O comando `npm start` apenas inicia o FastAPI; ele não instala Python nem Ollama automaticamente.
+
+## Ollama e modelos de texto
+
+1. Instale e inicie o Ollama no computador que executa o backend.
+2. Baixe um modelo compatível pelo próprio Ollama.
+3. Abra Configurações no JARVES e atualize a lista de modelos.
+
+A inferência ocorre no computador/servidor, não dentro do APK. Modelos maiores exigem mais memória e armazenamento. A alternativa offline `jarves-base` é limitada e não equivale a um LLM generativo.
+
+## Ideias em Imagens — até 7 por lote
+
+A área **Ideias em Imagens** permite refinar uma descrição com Ollama e enviar um lote de até sete imagens a um serviço local compatível com Stable Diffusion WebUI/Forge.
+
+No computador que executa o JARVES, configure:
+
+```bash
+JARVES_IMAGE_API_URL=http://127.0.0.1:7860
+```
+
+Inicie o serviço local de imagens com a API habilitada e reinicie o JARVES. O painel mostra se a conexão foi realmente detectada. PNGs recebidos são guardados em `data/generated-images/` e podem ser visualizados, baixados ou excluídos pela galeria.
+
+Sem um serviço de imagens configurado, a geração retorna uma mensagem de indisponibilidade; o JARVES não simula resultados. A geração usa CPU/GPU, RAM, energia e espaço em disco. Em celulares modestos, use o telefone como cliente do computador, não como host do modelo de imagem.
+
+A função **Imagem e 3D IA** existente continua separada: ela cria SVG vetorial e malhas OBJ por meio do modelo de texto, não imagens fotorrealistas.
 
 ## Android
-O APK é um cliente da interface web; ele não hospeda o backend Node/SQLite nem instala Ollama ou um modelo generativo no telefone. O backend e o provedor IA/Ollama continuam no PC/servidor.
-1. Inicie o JARVES no PC com `HOST=0.0.0.0 npm start` para habilitar o anúncio de descoberta na rede local.
-2. No Android, conecte-se à rede Wi-Fi em que o PC está. O APK procura automaticamente um servidor JARVES anunciado e valida `/api/health`.
-3. Na aba **Configurações** do APK, informe `http://<IP-do-PC>:3000` em **Servidor para este celular** e toque em **Validar e conectar**. O app confirma `/api/health`, salva o endereço e mostra o estado da conexão. Se a descoberta falhar, confira firewall e isolamento de clientes do roteador.
 
-A descoberta usa mDNS (`_jarves._tcp`) e só é anunciada quando o backend escuta em todas as interfaces ou num endereço local privado. O APK não liga o Wi-Fi nem ingressa numa rede protegida; ambos os aparelhos precisam estar na mesma rede local e a rede deve permitir tráfego entre dispositivos. A versão desktop instalada mantém o backend limitado a `127.0.0.1`; para conectar o APK, inicie o servidor Node em modo LAN conforme o passo 1.
+O APK é um cliente WebView. Ele não contém o backend Python, o Ollama nem um modelo generativo. Inicie o servidor no computador na mesma rede Wi-Fi:
 
-## IA sem cobrança por uso
-- Escolha **Ollama local** (ou **Automático**) em Configurações e instale um modelo compatível. A inferência fica no seu PC/servidor e não exige uma chave de API paga.
-- O download inicial precisa de internet e ocupa espaço em disco; a execução usa memória, processador/placa de vídeo e energia do seu equipamento. A licença de cada modelo pode variar.
-- Se Ollama não estiver disponível, Automático usa `jarves-base`, uma resposta offline básica e limitada, não um modelo generativo completo.
-- Provedores remotos compatíveis podem cobrar e exigem acesso próprio. **GPT-6.1 Sol** tem o identificador `gpt-6.1-sol`, suporta Chat Completions, mas é um modelo de API pago; ele só pode ser selecionado se o endpoint remoto configurado o listar. A lista de modelos é obtida dinamicamente, sem fingir suporte ou adicioná-lo como opção grátis. Consulte [documentação e preços oficiais](https://developers.openai.com/api/docs/models/gpt-6.1-sol).
+```bash
+JARVES_HOST=0.0.0.0 JARVES_PORT=8000 ./scripts/run.sh
+```
 
-## Gerar APK pelo GitHub
-1. Crie um repositório no GitHub e envie todos os arquivos desta pasta.
-2. Abra **Actions** e execute **Build JARVES Android APK** (workflow_dispatch). Pushes com mudanças Android, frontend, backend ou motores de IA também compilam o APK como artefato do workflow.
-3. Baixe `JARVES-AI-2.3.7-Android-APK` na seção Artifacts da execução.
-4. Para publicar o APK em Releases, crie e envie uma tag `v2.3.7`:
-   `git tag v2.3.7 && git push origin v2.3.7`
+No Windows, defina as variáveis de ambiente equivalentes antes de iniciar. No Android, informe `http://IP-DO-COMPUTADOR:8000` na tela Servidor e valide a conexão. Se o servidor estiver exposto na rede, configure `JARVES_ACCESS_TOKEN` no backend e informe o mesmo token em Configurações do JARVES.
 
-A página de downloads está em `/download.html` quando o servidor JARVES está em execução. O workflow **Publish JARVES downloads site** publica a mesma página como site estático no GitHub Pages e a atualiza em pushes para `main`. Ela consulta o release mais recente e só mostra botões quando encontra os assets reais `app-debug.apk`, `JARVES-AI-Setup-<versão>-x64.exe` e `JARVES-AI-<versão>-x86_64.AppImage`. Os workflows de Android, Windows e Linux anexam seus instaladores à Release quando uma tag `v*` é enviada. O APK é uma compilação de depuração; o EXE não é assinado.
+A comunicação HTTP na rede local não é criptografada. Use somente uma rede confiável, mantenha o firewall ativo e não encaminhe a porta do servidor para a internet.
 
-## Gerar instalador Windows
-- Execute `npm ci` e `npm run build:windows` em Windows com Node.js 22.13+. O instalador NSIS será criado em `dist/`.
-- O workflow **Build JARVES Windows EXE** compila o instalador em cada push que altera o app e o publica como artefato do Actions; tags `v*` também o anexam à Release correspondente.
-- O instalador ainda não tem assinatura de código; o Windows pode mostrar avisos do SmartScreen.
+## Builds
 
-## Gerar AppImage para Linux
-- Requer Node.js 22.13+; execute `npm ci` e `npm run build:linux` para criar `dist/JARVES-AI-2.3.7-x86_64.AppImage`.
-- O workflow **Build JARVES Linux AppImage** gera o mesmo pacote x86_64, publica-o como artefato do Actions e o anexa à Release nas tags `v*`.
-- Os pacotes Electron incluem o diretório `executor/`, usado pelo provedor de IA, e usam ícones de aplicativo específicos para Linux e Windows. O APK inclui ícones de launcher em todas as densidades Android.
+### Android APK
 
-## Interface, voz e correção assistida
-- O Chat reúne acesso ao Gerador, Voz e vídeo, Testes HTML, Relatórios, Agentes, Tarefas, Arquivos, Memória e Configurações no painel **Ferramentas**.
-- A opção **Unificar conversas** cria um Chat unificado com cópias cronológicas das mensagens de todos os históricos, incluindo o nome de origem; as conversas originais permanecem intactas. Pode ser usada novamente para acrescentar mensagens novas sem duplicar as já importadas.
-- O botão **Voz** no Chat transcreve pedidos e aceita os comandos “enviar”, “limpar texto”, “novo chat” e “parar resposta”. No Android usa o reconhecedor do sistema após pedir permissão de microfone; no navegador depende do suporte e do serviço de voz instalado. O reconhecimento pode exigir internet e não é garantidamente offline; pedidos ditados são transcritos para revisão antes de enviar, exceto quando a pessoa diz “enviar”.
-- Em Configurações é possível personalizar nome da IA, cor principal, efeito RGB, tema, voz/idioma e velocidade/tom da síntese de fala disponíveis no dispositivo. Essas preferências ficam neste dispositivo; síntese e reconhecimento não alteram a voz textual do modelo.
-- Também é possível carregar uma imagem PNG/JPG/WebP de até 5 MB, que é recortada e reduzida para 256×256 antes de ser guardada localmente e exibida como avatar da IA. No APK, Configurações também permite alternar entre dois ícones de launcher incluídos no pacote; imagens enviadas mudam o avatar dentro do app, mas não recompilam o ícone instalado.
-- A aba Voz e vídeo lê texto com a voz instalada, pode reproduzir junto um vídeo local e exporta o roteiro como TXT. O vídeo não é enviado, mas a voz não é incorporada/exportada no MP4; não existe um motor local de geração/edição de vídeo nesta versão.
-- Em **Arquivos e código**, o app importa arquivos do dispositivo e baixa arquivos de links HTTP/HTTPS públicos para o armazenamento local do JARVES. O download da rede usa o limite configurado para uploads; bloqueia loopback, IPs privados/locais e domínios que resolvam para esses endereços, limita redirecionamentos e não executa o conteúdo. Os bytes são gravados em fluxo para não carregar todo o arquivo na memória. Downloads e exportações mantêm os bytes originais.
-- A aba **Testes HTML** executa verificações locais da interface e consulta diagnósticos do servidor; **Relatórios** mostra o último resumo e permite exportar TXT/JSON. É possível fornecer um arquivo de texto/código nas Configurações para preparar uma solicitação de análise no Chat. A IA sugere correções em texto; não executa código nem modifica arquivos automaticamente.
-- O **Gerador** cria imagens vetoriais SVG 2D offline, malhas geométricas simples em OBJ/MTL e GLB, e um visualizador HTML local que gira o modelo ao arrastar. Para imagens rasterizadas geradas por IA, escolha **IA de imagem local (Automatic1111/Forge)** e configure um servidor local compatível com a API de Stable Diffusion WebUI; inicie-o com a API habilitada (por exemplo, `--api`). O JARVES encaminha o pedido ao computador/servidor configurado e oferece o PNG para baixar ou salvar. Não há cobrança por API nem chamada a serviço de nuvem, mas é preciso instalar o motor, baixar um modelo e ter recursos de hardware e energia; modelos podem ter licenças diferentes. Por segurança, o endereço só pode ser HTTP em loopback ou rede privada. Ollama local pode escolher a forma/cor ou gerar HTML; se não estiver disponível, o gerador informa a limitação e usa o modo offline. A geração de malhas continua procedural e limitada a cubo, esfera, cilindro e cone. A prévia de HTML usa iframe sandbox e não executa no contexto principal do app.
-- O fluxo de criação em Configurações encadeia pesquisa web opcional, geração de plano, confirmação e execução manual de etapas de IA. A pesquisa é desativada por padrão e envia a consulta ao DuckDuckGo quando ativada; o modelo usa o provedor selecionado. Etapas produzem conteúdo/código para revisão, não executam comandos nem compilam aplicativos; blocos HTML podem ser pré-visualizados em iframe isolado.
-- Provedores locais Ollama evitam cobrança por chamada, mas usam hardware local e podem exigir baixar modelos; uma IA remota ou voz não instalada não é tornada gratuita por esta interface.
-- Grok não foi adicionado como opção “100% grátis”: a [API oficial xAI](https://docs.x.ai/developers/pricing) publica cobrança por tokens e por imagem. A geração local incluída não chama essa API.
+O workflow **Android APK** compila `android/app/build/outputs/apk/debug/app-debug.apk` e envia o arquivo como artefato do GitHub Actions. O APK de debug não é um pacote assinado para publicação na Play Store.
 
-## Limites conhecidos
-- O APK de depuração é compilado pelo GitHub Actions com Java 17, Android SDK e Gradle 8.9.
-- O EXE Windows não foi executado neste ambiente Linux.
-- Não é correto afirmar que todos os bugs foram eliminados. Consulte `RELATORIO_ERROS_CORRECOES.txt`.
+### Windows EXE e Linux AppImage
+
+Os workflows de desktop empacotam o backend Python com PyInstaller e depois o Electron. O build deve ocorrer em runner do sistema operacional de destino. Os instaladores são artefatos de CI; não são publicados em Releases automaticamente.
+
+Build local Linux:
+```bash
+python -m pip install pyinstaller
+python -m PyInstaller --noconfirm --clean --onefile --name JARVESBackend --paths . --collect-all fastapi --collect-all starlette --collect-all pydantic --collect-all uvicorn --collect-all pypdf --collect-all multipart --add-data "frontend:frontend" --add-data "JARVES_UNIVERSAL_ERROR_ENGINE:JARVES_UNIVERSAL_ERROR_ENGINE" scripts/backend_entry.py
+mkdir -p build/backend
+cp dist/JARVESBackend build/backend/
+npm run build:linux
+```
+
+No Windows, use `;` como separador de `--add-data` e copie `dist/JARVESBackend.exe` para `build/backend/JARVESBackend.exe` antes de executar `npm run build:windows`.
+
+## Testes e verificações
+
+```bash
+npm run check
+npm test
+python -m unittest discover -s tests -p "test_*.py"
+```
+
+Os comandos verificam sintaxe, estrutura, interface, testes JavaScript e testes Python. A geração real de imagens depende de um serviço local; a compilação depende dos SDKs e runners correspondentes. Consulte o resultado dos workflows antes de considerar um artefato validado.
+
+## Custos e licenças
+
+O núcleo local prioriza ferramentas gratuitas e abertas. Baixar modelos e executá-los usa internet, armazenamento e hardware; licenças de modelos podem variar. Provedores remotos opcionais podem cobrar por uso. Não existe promessa de custo zero universal.
+
+## Segurança e dados
+
+- Não coloque chaves ou tokens no código nem em commits.
+- Use `.env.example` como referência; mantenha `.env` privado.
+- O banco local existente em `data/jarves.db` é preservado; não o substitua sem backup.
+- Faça backup antes de mudanças de banco ou migrações.
+- Endpoints remotos exigem token Bearer quando o cliente não é loopback.
+- O gerador de imagens aceita somente endpoint HTTP em localhost ou IP privado configurado no servidor.
+
+Consulte [Arquitetura](documentation/architecture.md), [Instalação](documentation/installation.md) e [Segurança](SECURITY.md).
