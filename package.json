@@ -1,7 +1,7 @@
 {
   "name": "jarves-ai",
   "version": "2.3.7",
-  "description": "JARVES AI multiplataforma com diagnóstico, testes HTML e cliente Android",
+  "description": "JARVES AI multiplataforma: FastAPI, Ollama local, cliente Android e desktop",
   "type": "module",
   "main": "desktop/main.cjs",
   "desktopName": "JARVES AI",
@@ -25,13 +25,13 @@
     "url": "https://github.com/pedromimiguel407-commits/jarve-apk-2.0.git"
   },
   "scripts": {
-    "start": "node backend/server.mjs",
+    "start": "node scripts/start.mjs",
     "desktop": "electron .",
-    "build:windows": "electron-builder --win nsis --x64 --publish never",
-    "build:linux": "electron-builder --linux AppImage --x64 --publish never",
+    "build:windows": "node scripts/build-desktop.mjs --win nsis",
+    "build:linux": "node scripts/build-desktop.mjs --linux AppImage",
     "check": "node scripts/check.mjs",
     "lint": "node scripts/check.mjs",
-    "test": "node --test"
+    "test": "node scripts/test.mjs"
   },
   "build": {
     "appId": "com.jarves.ai",
@@ -42,15 +42,18 @@
     "asar": true,
     "files": [
       "desktop/**/*",
-      "backend/**/*",
-      "ai/**/*",
-      "database/**/*",
-      "executor/**/*",
-      "frontend/**/*",
       "package.json"
     ],
+    "extraResources": [
+      {
+        "from": "build/backend",
+        "to": "backend",
+        "filter": [
+          "JARVESBackend*"
+        ]
+      }
+    ],
     "win": {
-      "icon": "build/icon.ico",
       "target": [
         {
           "target": "nsis",
@@ -69,7 +72,7 @@
       "createStartMenuShortcut": true
     },
     "linux": {
-      "icon": "build/icon.png",
+      "icon": "frontend/assets/icon-512.png",
       "target": [
         {
           "target": "AppImage",
@@ -79,7 +82,6 @@
         }
       ],
       "category": "Utility",
-      "syncDesktopName": true,
       "artifactName": "JARVES-AI-${version}-${arch}.${ext}"
     }
   },
