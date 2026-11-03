@@ -1,0 +1,85 @@
+name: JARVES Desktop Builds
+
+on:
+  push:
+    branches: ["main", "ai/**"]
+    paths:
+      - "desktop/**"
+      - "backend/**"
+      - "frontend/**"
+      - "scripts/**"
+      - "package.json"
+      - "package-lock.json"
+      - "requirements*.txt"
+      - ".github/workflows/desktop.yml"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: windows
+          - os: ubuntu-24.04
+            target: linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.13.0"
+          cache: npm
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - name: Install Python backend and PyInstaller
+        run: python -m pip install -r requirements.txt pyinstaller
+      - name: Install Node and Electron dependencies
+        run: npm ci
+      - name: Package Python backend (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          python -m PyInstaller --noconfirm --clean --onefile --name JARVESBackend --paths . --collect-all fastapi --collect-all starlette --collect-all pydantic --collect-all uvicorn --collect-all pypdf --collect-all multipart --add-data "frontend;frontend" --add-data "JARVES_UNIVERSAL_ERROR_ENGINE;JARVES_UNIVERSAL_ERROR_ENGINE" scripts/backend_entry.py
+          New-Item -ItemType Directory -Force build/backend | Out-Null
+          Copy-Item dist/JARVESBackend.exe build/backend/JARVESBackend.exe
+      - name: Package Python backend (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          python -m PyInstaller --noconfirm --clean --onefile --name JARVESBackend --paths . --collect-all fastapi --collect-all starlette --collect-all pydantic --collect-all uvicorn --collect-all pypdf --collect-all multipart --add-data "frontend:frontend" --add-data "JARVES_UNIVERSAL_ERROR_ENGINE:JARVES_UNIVERSAL_ERROR_ENGINE" scripts/backend_entry.py
+          mkdir -p build/backend
+          cp dist/JARVESBackend build/backend/JARVESBackend
+      - name: Build Windows installer
+        if: matrix.target == 'windows'
+        run: npm run build:windows
+      - name: Build Linux AppImage
+        if: matrix.target == 'linux'
+        run: npm run build:linux
+      - name: Upload Windows installer
+        if: matrix.target == 'windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: JARVES-Windows-EXE-${{ github.sha }}
+          path: dist/*.exe
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload Linux AppImage
+        if: matrix.target == 'linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: JARVES-Linux-AppImage-${{ github.sha }}
+          path: dist/*.AppImage
+          if-no-files-found: error
+          retention-days: 14
