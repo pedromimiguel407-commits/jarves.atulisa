@@ -79,8 +79,8 @@ jobs:
             $peOffset = $reader.ReadInt32()
             if ($peOffset -lt 64 -or $peOffset -gt ($stream.Length - 4)) { throw 'Cabeçalho PE fora dos limites.' }
             $stream.Position = $peOffset
-            $peSignature = [System.Text.Encoding]::ASCII.GetString($reader.ReadBytes(4))
-            if ($peSignature -ne [string]([char]80 + [char]69 + [char]0 + [char]0)) { throw 'Assinatura PE inválida.' }
+            $peBytes = $reader.ReadBytes(4)
+            if ($peBytes.Length -ne 4 -or $peBytes[0] -ne 80 -or $peBytes[1] -ne 69 -or $peBytes[2] -ne 0 -or $peBytes[3] -ne 0) { throw 'Assinatura PE inválida.' }
           } finally { $stream.Dispose() }
           $hash = (Get-FileHash -Path $installer.FullName -Algorithm SHA256).Hash
           Set-Content -Path "$($installer.FullName).sha256" -Value "$hash  $($installer.Name)" -Encoding ascii
