@@ -102,6 +102,44 @@ jobs:
             dist/*.sha256
           if-no-files-found: error
           retention-days: 30
+      - name: Smoke test Linux AppImage and embedded API
+        if: matrix.target == 'linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          APPIMAGE="$(find dist -maxdepth 1 -type f -name '*.AppImage' -print -quit)"
+          test -n "$APPIMAGE"
+          chmod +x "$APPIMAGE"
+          "$APPIMAGE" --appimage-extract >/tmp/jarves-appimage-extract.log 2>&1
+          test -x squashfs-root/AppRun
+          xvfb-run -a env ELECTRON_DISABLE_GPU=1 ./squashfs-root/AppRun --no-sandbox >/tmp/jarves-linux-smoke.log 2>&1 &
+          APP_PID=$!
+          cleanup() {
+            kill "$APP_PID" 2>/dev/null || true
+            pkill -f 'JARVESBackend' 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          PORT=""
+          for attempt in $(seq 1 60); do
+            PORT="$(sed -n 's/.*Uvicorn running on http:\/\/127\.0\.0\.1:\([0-9][0-9]*\).*/\1/p' /tmp/jarves-linux-smoke.log | head -n 1)"
+            if [ -n "$PORT" ]; then break; fi
+            if ! kill -0 "$APP_PID" 2>/dev/null; then
+              cat /tmp/jarves-linux-smoke.log
+              echo "O aplicativo Linux encerrou antes de iniciar."
+              exit 1
+            fi
+            sleep 1
+          done
+          if [ -z "$PORT" ]; then
+            cat /tmp/jarves-linux-smoke.log
+            echo "O backend embutido não iniciou em 60 segundos."
+            exit 1
+          fi
+          curl --fail --silent --show-error "http://127.0.0.1:$PORT/api/health" -o /tmp/jarves-health.json
+          python -c "import json; d=json.load(open('/tmp/jarves-health.json')); assert d.get('status') == 'ok', d; assert d.get('version') == '2.3.9', d; print('Linux AppImage smoke test OK:', d)"
+          kill -0 "$APP_PID"
       - name: Upload Linux AppImage
         if: matrix.target == 'linux'
         uses: actions/upload-artifact@v4
