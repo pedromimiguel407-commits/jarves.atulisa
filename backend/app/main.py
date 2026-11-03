@@ -1096,7 +1096,7 @@ def image_api_base() -> str:
             detail="Gerador de imagens local não configurado. Defina JARVES_IMAGE_API_URL no servidor.",
         )
     parsed = urlsplit(IMAGE_API_URL)
-    if parsed.scheme != "http" or not parsed.hostname or parsed.username or parsed.password:
+    if parsed.scheme != "http" or not parsed.hostname or parsed.username or parsed.password or parsed.path not in ("", "/") or parsed.query or parsed.fragment:
         raise HTTPException(status_code=400, detail="JARVES_IMAGE_API_URL deve ser um endereço HTTP local válido.")
     hostname = parsed.hostname.casefold()
     if hostname != "localhost":
@@ -1217,7 +1217,7 @@ def generate_image_batch(payload: ImageBatchRequest) -> dict[str, Any]:
             raw = base64.b64decode(encoded, validate=True)
         except (ValueError, base64.binascii.Error):
             continue
-        if len(raw) > MAX_GENERATED_IMAGE_BYTES or not raw.startswith(b"\x89PNG\r\n\x1a\n"):
+        if len(raw) > MAX_GENERATED_IMAGE_BYTES or len(raw) < 33 or not raw.startswith(b"\x89PNG\r\n\x1a\n") or raw[12:16] != b"IHDR":
             continue
         image_id = str(uuid.uuid4())
         filename = f"{image_id}.png"
