@@ -1,6 +1,6 @@
 {
   "name": "jarves-ai",
-  "version": "2.3.7",
+  "version": "2.3.9",
   "description": "JARVES AI multiplataforma: FastAPI, Ollama local, cliente Android e desktop",
   "type": "module",
   "main": "desktop/main.cjs",
