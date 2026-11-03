@@ -139,7 +139,7 @@ class JarvesApiTests(unittest.TestCase):
     def test_image_batch_saves_only_images_returned_by_the_provider(self) -> None:
         import base64
 
-        png = b"\x89PNG\r\n\x1a\n" + (13).to_bytes(4, "big") + b"IHDR" + (1).to_bytes(4, "big") * 2 + b"\x08\x06\x00\x00\x00"
+        png = b"\x89PNG\r\n\x1a\n" + (13).to_bytes(4, "big") + b"IHDR" + (1).to_bytes(4, "big") * 2 + b"\x08\x06\x00\x00\x00\x00\x00\x00\x00"
         encoded = base64.b64encode(png).decode("ascii")
         with (
             patch.object(main, "IMAGE_API_URL", "http://127.0.0.1:7860"),
