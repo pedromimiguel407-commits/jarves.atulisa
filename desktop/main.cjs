@@ -111,7 +111,7 @@ async function start() {
     const url = `http://127.0.0.1:${port}`;
     const command = backendCommand(port);
     backend = spawn(command.command, command.args, {
-      cwd: app.getAppPath(),
+      cwd: app.isPackaged ? app.getPath('userData') : app.getAppPath(),
       env: command.env,
       stdio: ['ignore', 'pipe', 'pipe'],
       windowsHide: true,
