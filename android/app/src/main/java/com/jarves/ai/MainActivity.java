@@ -266,7 +266,7 @@ public class MainActivity extends Activity {
         if (serverDialog != null && serverDialog.isShowing()) return;
         final EditText input = new EditText(this);
         input.setSingleLine(true);
-        input.setHint("http://192.168.1.10:3000");
+        input.setHint("http://192.168.1.10:8000");
         input.setText(pendingServerUrl.isEmpty()
             ? getPreferences(MODE_PRIVATE).getString(KEY_URL, "")
             : pendingServerUrl);
@@ -345,7 +345,7 @@ public class MainActivity extends Activity {
                 } else {
                     serverConnectionStatus = "error";
                     serverErrorMessage = "Não consegui validar " + serverUrl + ": " + result
-                        + ". Confirme o endereço, a porta 3000, a rede Wi-Fi e o firewall do computador.";
+                        + ". Confirme o endereço, a porta 8000 por padrão, a rede Wi-Fi e o firewall do computador.";
                     loading.setText("Servidor não respondeu · confira o endereço e tente novamente.");
                     showServerDialog();
                 }
