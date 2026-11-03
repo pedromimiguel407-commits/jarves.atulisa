@@ -44,6 +44,7 @@ OPENAI_MODELS = (
 OPENAI_MODEL_IDS = {model["name"].removeprefix("openai:") for model in OPENAI_MODELS}
 DATABASE = Path(os.getenv("JARVES_DATABASE", str(ROOT / "data" / "jarves.db")))
 DEFAULT_MODEL = os.getenv("JARVES_MODEL", "").strip()
+APP_VERSION = os.getenv("JARVES_VERSION", "2.3.7")
 ACCESS_TOKEN = os.getenv("JARVES_ACCESS_TOKEN", "").strip()
 MAX_HISTORY_MESSAGES = 20
 MAX_HISTORY_CHARS = 32_000
@@ -72,7 +73,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(
     title="JARVES AI",
     description="API do JARVES com modelos locais Ollama e integração opcional com OpenAI.",
-    version="0.1.0",
+    version=APP_VERSION,
     lifespan=lifespan,
 )
 
@@ -907,7 +908,7 @@ def status() -> dict[str, Any]:
 
 @app.get("/api/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "service": "jarves-api"}
+    return {"status": "ok", "service": "jarves-api", "version": APP_VERSION}
 
 
 @app.get("/api/ai/status")
