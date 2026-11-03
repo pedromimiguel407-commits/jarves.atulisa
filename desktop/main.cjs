@@ -3,10 +3,12 @@ const { spawn } = require('node:child_process');
 const net = require('node:net');
 const path = require('node:path');
 const fs = require('node:fs');
+const dotenv = require('dotenv');
 
 let backend = null;
 let mainWindow = null;
 let shuttingDown = false;
+let backendUrl = null;
 
 function reservePort() {
   return new Promise((resolve, reject) => {
@@ -69,6 +71,7 @@ async function waitForBackend(url, timeoutMs = 45000) {
 }
 
 function createWindow(url) {
+  backendUrl = url;
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 820,
@@ -93,6 +96,8 @@ function createWindow(url) {
 
 async function start() {
   try {
+    const envDirectory = app.isPackaged ? app.getPath('userData') : app.getAppPath();
+    dotenv.config({ path: path.join(envDirectory, '.env') });
     const port = await reservePort();
     const url = `http://127.0.0.1:${port}`;
     const command = backendCommand(port);
@@ -122,7 +127,7 @@ async function start() {
 
 app.whenReady().then(start);
 app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0 && mainWindow) mainWindow.show();
+  if (BrowserWindow.getAllWindows().length === 0 && backendUrl) createWindow(backendUrl);
 });
 app.on('before-quit', () => {
   shuttingDown = true;
