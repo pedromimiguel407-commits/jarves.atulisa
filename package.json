@@ -15,14 +15,13 @@
   },
   "productName": "JARVES AI",
   "author": {
-    "name": "JARVES AI",
-    "email": "jarves-ai@example.com"
+    "name": "JARVES AI contributors"
   },
-  "license": "UNLICENSED",
-  "homepage": "https://github.com/pedromimiguel407-commits/jarve-apk-2.0",
+  "license": "MIT",
+  "homepage": "https://github.com/pedromimiguel407-commits/jarves.atulisa",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pedromimiguel407-commits/jarve-apk-2.0.git"
+    "url": "https://github.com/pedromimiguel407-commits/jarves.atulisa.git"
   },
   "scripts": {
     "start": "node scripts/start.mjs",
