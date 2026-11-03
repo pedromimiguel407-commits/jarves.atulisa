@@ -114,7 +114,7 @@ jobs:
           chmod +x "$APPIMAGE"
           "$APPIMAGE" --appimage-extract >/tmp/jarves-appimage-extract.log 2>&1
           test -x squashfs-root/AppRun
-          xvfb-run -a env JARVES_PORT=18765 ELECTRON_DISABLE_GPU=1 ./squashfs-root/AppRun --no-sandbox >/tmp/jarves-linux-smoke.log 2>&1 &
+          xvfb-run -a env JARVES_PORT=18765 JARVES_SMOKE_TEST=1 ELECTRON_DISABLE_GPU=1 ./squashfs-root/AppRun --no-sandbox >/tmp/jarves-linux-smoke.log 2>&1 &
           APP_PID=$!
           trap 'kill "$APP_PID" 2>/dev/null || true; pkill -f "[J]ARVESBackend" 2>/dev/null || true' EXIT
           HEALTH_OK=0
