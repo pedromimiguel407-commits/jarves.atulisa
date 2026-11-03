@@ -16,6 +16,7 @@
     <script src="/autosave.js" defer></script>
     <script src="/anime-studio.js" defer></script>
     <script src="/app.js" defer></script>
+    <script src="/images-studio.js" defer></script>
   </head>
   <body>
     <div class="app-shell">
@@ -29,6 +30,7 @@
           <button class="tool-nav-button active" type="button" data-view="chat-view"><span>◉</span> Chat</button>
           <button class="tool-nav-button" type="button" data-view="html-view"><span>&lt;/&gt;</span> Testar HTML</button>
           <button class="tool-nav-button" type="button" data-view="image3d-view"><span>◇</span> Imagem e 3D IA</button>
+          <button class="tool-nav-button" type="button" data-view="images-view"><span>✦</span> Ideias em Imagens</button>
           <button class="tool-nav-button" type="button" data-view="video-view"><span>♫</span> Estúdio Anime</button>
           <button class="tool-nav-button" type="button" data-view="files-view"><span>▤</span> Gerenciar arquivos</button>
           <button class="tool-nav-button" type="button" data-view="memory-view"><span>▧</span> Memória</button>
@@ -279,6 +281,48 @@
             </section>
           </div>
           <p class="tool-footnote">A qualidade depende do modelo de linguagem e pode variar. Importe arquivos OBJ em um editor 3D compatível, como o Blender; confira a licença do modelo Ollama antes de redistribuir o conteúdo gerado.</p>
+        </section>
+
+
+        <section class="tab-view tool-view" id="images-view" hidden>
+          <div class="tool-heading">
+            <div>
+              <p class="eyebrow">ESTÚDIO DE CRIAÇÃO LOCAL</p>
+              <h1>Ideias em <span>Imagens</span></h1>
+              <p>Transforme uma ideia em um prompt visual e gere até sete imagens em um lote.</p>
+            </div>
+          </div>
+          <div class="artifact-notice">
+            <strong>Geração real, sem simulação</strong>
+            <span>Este recurso usa um servidor local compatível com Stable Diffusion WebUI ou Forge. Ollama pode refinar o prompt, mas não gera os PNGs. O serviço de imagens precisa estar instalado e configurado no computador que executa o JARVES.</span>
+          </div>
+          <div class="image-studio-grid">
+            <section class="artifact-card image-studio-controls">
+              <h2>Descreva sua ideia</h2>
+              <label for="image-idea">IDEIA ORIGINAL</label>
+              <textarea id="image-idea" maxlength="2000" rows="4" placeholder="Ex.: uma cidade flutuante ao pôr do sol, com jardins suspensos e pequenas luzes mágicas..."></textarea>
+              <label for="image-style">ESTILO VISUAL (OPCIONAL)</label>
+              <input id="image-style" type="text" maxlength="120" placeholder="Pixel art, aquarela, fantasia, anime...">
+              <button class="secondary-button" id="btn-refine-image-prompt" type="button">✧ Refinar ideia com Ollama</button>
+              <label for="image-prompt">PROMPT FINAL</label>
+              <textarea id="image-prompt" maxlength="4000" rows="5" placeholder="O prompt visual aparecerá aqui. Você também pode editá-lo."></textarea>
+              <label for="image-negative">PROMPT NEGATIVO (OPCIONAL)</label>
+              <textarea id="image-negative" maxlength="1000" rows="2" placeholder="Elementos que deseja evitar..."></textarea>
+              <div class="image-studio-options">
+                <label for="image-count">Quantidade<select id="image-count"><option value="1">1 imagem</option><option value="2">2 imagens</option><option value="3">3 imagens</option><option value="4">4 imagens</option><option value="5">5 imagens</option><option value="6">6 imagens</option><option value="7">7 imagens</option></select></label>
+                <label for="image-width">Largura<select id="image-width"><option>512</option><option>640</option><option>768</option><option>1024</option></select></label>
+                <label for="image-height">Altura<select id="image-height"><option>512</option><option>640</option><option>768</option><option>1024</option></select></label>
+                <label for="image-steps">Etapas<select id="image-steps"><option>15</option><option selected>20</option><option>25</option><option>30</option><option>40</option></select></label>
+              </div>
+              <button class="save-button" id="btn-generate-image-batch" type="button">✦ Gerar imagens</button>
+              <p id="image-generation-status" class="tool-footnote" role="status" aria-live="polite">Verificando conexão com o gerador local...</p>
+            </section>
+            <section class="artifact-card image-studio-gallery-panel">
+              <header><strong>GALERIA DE IMAGENS</strong><button class="secondary-button" id="btn-refresh-image-gallery" type="button">Atualizar</button></header>
+              <div id="image-gallery" class="image-gallery-grid" aria-live="polite"><p class="tool-footnote">Suas imagens geradas aparecerão aqui.</p></div>
+            </section>
+          </div>
+          <p class="tool-footnote">A geração usa memória, processamento e armazenamento do computador/servidor. Celulares podem atuar como clientes do JARVES, mas não precisam executar o modelo de imagem localmente. Confira a licença do modelo utilizado antes de redistribuir imagens.</p>
         </section>
 
         <section class="tab-view tool-view" id="files-view" hidden>
