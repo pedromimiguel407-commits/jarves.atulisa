@@ -64,7 +64,8 @@ MAX_SVG_CHARS = 100_000
 MAX_OBJ_CHARS = 1_000_000
 MAX_OBJ_VERTICES = 20_000
 MAX_OBJ_FACES = 20_000
-MAX_GENERATED_IMAGE_BYTES = 15 * 1024 * 1024
+MAX_GENERATED_IMAGE_BYTES = 8 * 1024 * 1024
+MAX_IMAGE_BATCH_RESPONSE_BYTES = 80 * 1024 * 1024
 
 
 @asynccontextmanager
@@ -1107,12 +1108,17 @@ def image_api_base() -> str:
                 status_code=400,
                 detail="Por segurança, o gerador de imagens deve usar localhost ou um IP privado explícito.",
             ) from error
-        if not (address.is_loopback or address.is_private or address.is_link_local):
+        if not address.is_loopback and (not address.is_private or address.is_link_local or address.is_reserved or address.is_multicast or address.is_unspecified):
             raise HTTPException(status_code=400, detail="O gerador de imagens só pode usar endereço local ou privado.")
     return IMAGE_API_URL
 
 
-def image_api_request(path: str, payload: dict[str, Any] | None = None, timeout: int = 8) -> Any:
+def image_api_request(
+    path: str,
+    payload: dict[str, Any] | None = None,
+    timeout: int = 8,
+    max_response_bytes: int = 2 * 1024 * 1024,
+) -> Any:
     base = image_api_base()
     headers = {"Accept": "application/json"}
     data = None
@@ -1124,7 +1130,10 @@ def image_api_request(path: str, payload: dict[str, Any] | None = None, timeout:
     request = urllib.request.Request(f"{base}{path}", data=data, headers=headers, method=method)
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
-            return json.loads(response.read())
+            body = response.read(max_response_bytes + 1)
+            if len(body) > max_response_bytes:
+                raise HTTPException(status_code=413, detail="A resposta do gerador excedeu o limite de tamanho configurado.")
+            return json.loads(body)
     except urllib.error.HTTPError as error:
         detail = error.read(500).decode("utf-8", errors="replace")
         raise HTTPException(status_code=502, detail=f"Gerador de imagens respondeu HTTP {error.code}: {detail}") from error
@@ -1201,6 +1210,7 @@ def generate_image_batch(payload: ImageBatchRequest) -> dict[str, Any]:
             "steps": payload.steps,
         },
         timeout=240,
+        max_response_bytes=MAX_IMAGE_BATCH_RESPONSE_BYTES,
     )
     images = result.get("images") if isinstance(result, dict) else None
     if not isinstance(images, list) or not images:
