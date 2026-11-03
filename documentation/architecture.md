@@ -9,7 +9,7 @@
 - **Lógica:** `backend/app/logic_engine.py` classifica pedidos e propõe etapas; não executa ferramentas nem prova fatos.
 - **Arquivos:** upload de TXT/PDF com limites; conteúdo extraído é armazenado no banco.
 - **Imagem vetorial:** `POST /api/generate/image` pede SVG ao modelo de texto e valida a saída.
-- **Imagem raster:** `POST /api/images/generate` encaminha a solicitação a um endpoint local Stable Diffusion WebUI/Forge, valida PNG e guarda em `data/generated-images/`. Máximo de 7 por lote.
+- **Imagem raster:** `POST /api/images/generate` encaminha a solicitação a um endpoint local Stable Diffusion WebUI/Forge, confere a assinatura e o cabeçalho PNG e guarda em `data/generated-images/`. Máximo de 7 por lote.
 - **Android:** WebView conectado ao backend remoto na rede local.
 - **Desktop:** Electron inicia backend Python empacotado por PyInstaller.
 
