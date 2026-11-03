@@ -1,10 +1,8 @@
 import { spawn } from 'node:child_process';
 import { access } from 'node:fs/promises';
 import path from 'node:path';
-import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
-const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 if (!args.length || !['--win', '--linux'].includes(args[0])) {
@@ -23,17 +21,12 @@ try {
   console.error('Gere-o com PyInstaller antes de empacotar o Electron. O workflow oficial faz essa etapa.');
   process.exit(2);
 }
-let cli;
-try {
-  cli = require.resolve('electron-builder/cli.js');
-} catch {
-  console.error('electron-builder não encontrado. Execute npm ci primeiro.');
-  process.exit(2);
-}
-const child = spawn(process.execPath, [cli, ...args, '--x64', '--publish', 'never'], {
+const command = process.platform === 'win32' ? 'electron-builder.cmd' : 'electron-builder';
+const child = spawn(command, [...args, '--x64', '--publish', 'never'], {
   cwd: root,
   stdio: 'inherit',
   env: process.env,
+  shell: process.platform === 'win32',
 });
 child.on('error', (error) => { console.error(error.message); process.exitCode = 1; });
 child.on('exit', (code) => { process.exitCode = code ?? 1; });
