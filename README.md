@@ -75,15 +75,13 @@ A função **Imagem e 3D IA** existente continua separada: ela cria SVG vetorial
 
 ## Android
 
-O APK é um cliente WebView. Ele não contém o backend Python, o Ollama nem um modelo generativo. Inicie o servidor no computador na mesma rede Wi-Fi:
+O APK abre um **menu independente no próprio celular**, sem exigir computador para iniciar a aplicação. Inclui bloco de notas local, uso do reconhecimento de voz do Android e uma opção de conexão com API externa/local quando existir um servidor disponível. O menu e as notas funcionam offline.
 
-```bash
-JARVES_HOST=0.0.0.0 JARVES_PORT=8000 ./scripts/run.sh
-```
+**Limite importante:** esta compilação ainda não embute o backend Python, Ollama ou um modelo generativo local no APK. Portanto, a conversa generativa e recursos que dependem da API continuam indisponíveis sem um backend/modelo configurado. O reconhecimento de voz depende do serviço de fala instalado no Android e pode precisar de internet.
 
-No Windows, defina as variáveis de ambiente equivalentes antes de iniciar. No Android, informe `http://IP-DO-COMPUTADOR:8000` na tela Servidor e valide a conexão. Se o servidor estiver exposto na rede, configure `JARVES_ACCESS_TOKEN` no backend e informe o mesmo token em Configurações do JARVES.
+Para conectar a uma API opcional, abra **Configurar conexão** no menu e informe o endereço HTTPS (ou HTTP apenas em rede local confiável). Se o servidor exigir autenticação, configure o token correspondente nas definições do backend.
 
-A comunicação HTTP na rede local não é criptografada. Use somente uma rede confiável, mantenha o firewall ativo e não encaminhe a porta do servidor para a internet.
+O aplicativo não força a abertura da sua tela ao ligar/reiniciar o telefone. O Android restringe lançamentos de atividades em segundo plano; abra o JARVES pelo ícone normal do aplicativo.
 
 ## Builds
 
