@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.3.7-evolution-beta — branch `ai/evolution-max-2026-11-02`
+
+- Restaurada a marcação HTML compatível com `frontend/app.js`, `frontend/styles.css`, o service worker e os testes existentes; a página substituída anteriormente apontava para recursos e seletores ausentes.
+- `npm start` agora inicia o backend ativo FastAPI/Uvicorn por `scripts/start.mjs`; o README deixa explícito que os módulos Node em `ai/` e `backend/services/` são legados e não o servidor em execução.
+- `GET /api/health` agora informa a versão da aplicação, compatível com a verificação feita pelo cliente Android.
+- Nova área **Ideias em Imagens**: refinamento opcional de prompt com Ollama, lotes limitados a 7 imagens, integração local Stable Diffusion WebUI/Forge, galeria, download e exclusão.
+- A API de imagem limita endpoint a localhost/IP privado explícito, valida cabeçalho PNG e limita o tamanho da resposta e dos arquivos.
+- Adicionados scripts de verificação/testes, inicialização desktop Electron com backend PyInstaller e workflows de CI, Android e desktop.
+- Documentação de instalação, arquitetura, segurança, licença e variáveis de ambiente alinhadas ao código ativo.
+- Nenhuma Release foi publicada e a branch `main` não foi alterada.
+
+**Validação:** consultar os workflows desta branch antes de considerar APK, EXE ou AppImage concluídos. Geração de imagens raster exige um serviço local configurado; não há geração simulada.
+
+
 ## 2.3.0+executor-2
 - Executor HTML: quando o Ollama falha, o aviso agora distingue "desligado" de "ligado mas bloqueado pelo navegador (CORS)", mostra o
   comando exato para Linux/Windows/Mac e oferece "Usar modo demonstracao". Seletor de modelo mostra "sem modelos" em vez de ficar vazio.
