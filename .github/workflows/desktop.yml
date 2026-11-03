@@ -1,0 +1,146 @@
+name: JARVES Desktop Builds
+
+on:
+  push:
+    branches: ["main", "ai/**"]
+    paths:
+      - "desktop/**"
+      - "backend/**"
+      - "frontend/**"
+      - "scripts/**"
+      - "package.json"
+      - "package-lock.json"
+      - "requirements*.txt"
+      - ".github/workflows/desktop.yml"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: windows
+          - os: ubuntu-24.04
+            target: linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.13.0"
+          cache: npm
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - name: Install Python backend and PyInstaller
+        run: python -m pip install -r requirements.txt pyinstaller
+      - name: Install Node and Electron dependencies
+        run: npm ci
+      - name: Package Python backend (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          python -m PyInstaller --noconfirm --clean --onefile --name JARVESBackend --paths . --collect-all fastapi --collect-all starlette --collect-all pydantic --collect-all uvicorn --collect-all pypdf --collect-all multipart --add-data "frontend;frontend" --add-data "JARVES_UNIVERSAL_ERROR_ENGINE;JARVES_UNIVERSAL_ERROR_ENGINE" scripts/backend_entry.py
+          New-Item -ItemType Directory -Force build/backend | Out-Null
+          Copy-Item dist/JARVESBackend.exe build/backend/JARVESBackend.exe
+      - name: Package Python backend (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          python -m PyInstaller --noconfirm --clean --onefile --name JARVESBackend --paths . --collect-all fastapi --collect-all starlette --collect-all pydantic --collect-all uvicorn --collect-all pypdf --collect-all multipart --add-data "frontend:frontend" --add-data "JARVES_UNIVERSAL_ERROR_ENGINE:JARVES_UNIVERSAL_ERROR_ENGINE" scripts/backend_entry.py
+          mkdir -p build/backend
+          cp dist/JARVESBackend build/backend/JARVESBackend
+      - name: Build Windows installer
+        if: matrix.target == 'windows'
+        run: npm run build:windows
+      - name: Verify Windows installer and create SHA-256
+        if: matrix.target == 'windows'
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem -Path dist -Filter '*.exe' -File | Sort-Object Length -Descending | Select-Object -First 1
+          if (-not $installer) { throw 'Nenhum instalador EXE foi gerado.' }
+          if ($installer.Length -lt 50000000) { throw "O instalador parece incompleto: $($installer.Length) bytes." }
+          $stream = [System.IO.File]::OpenRead($installer.FullName)
+          try {
+            $reader = [System.IO.BinaryReader]::new($stream)
+            if ([System.Text.Encoding]::ASCII.GetString($reader.ReadBytes(2)) -ne 'MZ') { throw 'Assinatura DOS/PE inválida.' }
+            $stream.Position = 60
+            $peOffset = $reader.ReadInt32()
+            if ($peOffset -lt 64 -or $peOffset -gt ($stream.Length - 4)) { throw 'Cabeçalho PE fora dos limites.' }
+            $stream.Position = $peOffset
+            $peBytes = $reader.ReadBytes(4)
+            if ($peBytes.Length -ne 4 -or $peBytes[0] -ne 80 -or $peBytes[1] -ne 69 -or $peBytes[2] -ne 0 -or $peBytes[3] -ne 0) { throw 'Assinatura PE inválida.' }
+          } finally { $stream.Dispose() }
+          $hash = (Get-FileHash -Path $installer.FullName -Algorithm SHA256).Hash
+          Set-Content -Path "$($installer.FullName).sha256" -Value "$hash  $($installer.Name)" -Encoding ascii
+          $signature = Get-AuthenticodeSignature -FilePath $installer.FullName
+          if ($signature.Status -eq 'HashMismatch') { throw 'O hash Authenticode do EXE não confere.' }
+          if ($signature.Status -eq 'NotSigned') { Write-Warning 'EXE sem assinatura Authenticode: o Windows pode exibir o SmartScreen.' }
+          Write-Host "EXE validado: $($installer.Name) ($($installer.Length) bytes)"
+          Write-Host "SHA-256: $hash"
+      - name: Build Linux AppImage
+        if: matrix.target == 'linux'
+        run: npm run build:linux
+      - name: Upload Windows installer
+        if: matrix.target == 'windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: JARVES-Windows-EXE-${{ github.sha }}
+          path: |
+            dist/*.exe
+            dist/*.sha256
+          if-no-files-found: error
+          retention-days: 30
+      - name: Smoke test Linux AppImage and embedded API
+        if: matrix.target == 'linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          APPIMAGE="$(find dist -maxdepth 1 -type f -name '*.AppImage' -print -quit)"
+          test -n "$APPIMAGE"
+          chmod +x "$APPIMAGE"
+          "$APPIMAGE" --appimage-extract >/tmp/jarves-appimage-extract.log 2>&1
+          test -x squashfs-root/AppRun
+          xvfb-run -a env JARVES_PORT=18765 JARVES_SMOKE_TEST=1 ELECTRON_DISABLE_GPU=1 ./squashfs-root/AppRun --no-sandbox >/tmp/jarves-linux-smoke.log 2>&1 &
+          APP_PID=$!
+          trap 'kill "$APP_PID" 2>/dev/null || true; pkill -f "[J]ARVESBackend" 2>/dev/null || true' EXIT
+          HEALTH_OK=0
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --show-error "http://127.0.0.1:18765/api/health" -o /tmp/jarves-health.json 2>/dev/null; then
+              HEALTH_OK=1
+              break
+            fi
+            if ! kill -0 "$APP_PID" 2>/dev/null; then cat /tmp/jarves-linux-smoke.log; exit 1; fi
+            sleep 1
+          done
+          if [ "$HEALTH_OK" -ne 1 ]; then
+            cat /tmp/jarves-linux-smoke.log
+            echo "O backend embutido não respondeu na porta de teste 18765."
+            exit 1
+          fi
+          python -c "import json; d=json.load(open('/tmp/jarves-health.json')); assert d.get('status') == 'ok' and d.get('version') == '2.3.9', d; print('Linux AppImage smoke test OK:', d)"
+          curl --fail --silent --show-error "http://127.0.0.1:18765/" -o /tmp/jarves-index.html
+          grep -qi "JARVES" /tmp/jarves-index.html
+          echo "Linux UI homepage loaded successfully."
+          kill -0 "$APP_PID"
+      - name: Upload Linux AppImage
+        if: matrix.target == 'linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: JARVES-Linux-AppImage-${{ github.sha }}
+          path: dist/*.AppImage
+          if-no-files-found: error
+          retention-days: 14

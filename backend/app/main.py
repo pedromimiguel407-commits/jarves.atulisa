@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import hmac
 import io
 import ipaddress
@@ -18,10 +19,10 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path, PurePath
 from typing import Annotated, Any, Literal
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit
 
 from fastapi import FastAPI, File, HTTPException, Query, Request, Response, UploadFile
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from pypdf import PdfReader
@@ -44,6 +45,8 @@ OPENAI_MODELS = (
 OPENAI_MODEL_IDS = {model["name"].removeprefix("openai:") for model in OPENAI_MODELS}
 DATABASE = Path(os.getenv("JARVES_DATABASE", str(ROOT / "data" / "jarves.db")))
 DEFAULT_MODEL = os.getenv("JARVES_MODEL", "").strip()
+IMAGE_API_URL = os.getenv("JARVES_IMAGE_API_URL", "").strip().rstrip("/")
+APP_VERSION = os.getenv("JARVES_VERSION", "2.3.9")
 ACCESS_TOKEN = os.getenv("JARVES_ACCESS_TOKEN", "").strip()
 MAX_HISTORY_MESSAGES = 20
 MAX_HISTORY_CHARS = 32_000
@@ -61,6 +64,8 @@ MAX_SVG_CHARS = 100_000
 MAX_OBJ_CHARS = 1_000_000
 MAX_OBJ_VERTICES = 20_000
 MAX_OBJ_FACES = 20_000
+MAX_GENERATED_IMAGE_BYTES = 8 * 1024 * 1024
+MAX_IMAGE_BATCH_RESPONSE_BYTES = 80 * 1024 * 1024
 
 
 @asynccontextmanager
@@ -72,7 +77,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(
     title="JARVES AI",
     description="API do JARVES com modelos locais Ollama e integração opcional com OpenAI.",
-    version="0.1.0",
+    version=APP_VERSION,
     lifespan=lifespan,
 )
 
@@ -154,6 +159,16 @@ def initialize_database() -> None:
                 created_at TEXT NOT NULL
             );
             CREATE INDEX IF NOT EXISTS memories_created_idx ON memories(created_at DESC);
+            CREATE TABLE IF NOT EXISTS generated_images (
+                id TEXT PRIMARY KEY,
+                filename TEXT NOT NULL,
+                prompt TEXT NOT NULL,
+                provider TEXT NOT NULL,
+                width INTEGER NOT NULL,
+                height INTEGER NOT NULL,
+                created_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS generated_images_created_idx ON generated_images(created_at DESC);
             """
         )
 
@@ -363,6 +378,21 @@ class ChatRequest(BaseModel):
 
 class ArtifactRequest(BaseModel):
     prompt: Annotated[str, Field(min_length=1, max_length=MAX_ARTIFACT_PROMPT_CHARS)]
+    model: Annotated[str | None, Field(max_length=200)] = None
+
+
+class ImageBatchRequest(BaseModel):
+    prompt: Annotated[str, Field(min_length=1, max_length=4_000)]
+    negative_prompt: Annotated[str, Field(max_length=1_000)] = ""
+    count: Annotated[int, Field(ge=1, le=7)] = 1
+    width: Annotated[int, Field(ge=256, le=1024, multiple_of=64)] = 512
+    height: Annotated[int, Field(ge=256, le=1024, multiple_of=64)] = 512
+    steps: Annotated[int, Field(ge=5, le=40)] = 20
+
+
+class ImagePromptRequest(BaseModel):
+    idea: Annotated[str, Field(min_length=1, max_length=2_000)]
+    style: Annotated[str, Field(max_length=120)] = ""
     model: Annotated[str | None, Field(max_length=200)] = None
 
 
@@ -907,7 +937,7 @@ def status() -> dict[str, Any]:
 
 @app.get("/api/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "service": "jarves-api"}
+    return {"status": "ok", "service": "jarves-api", "version": APP_VERSION}
 
 
 @app.get("/api/ai/status")
@@ -1057,6 +1087,241 @@ def generate_image(payload: ArtifactRequest) -> dict[str, Any]:
         "attempts": attempts,
         "generation_seconds": round(time.perf_counter() - generation_started, 2),
     }
+
+
+
+def image_api_base() -> str:
+    if not IMAGE_API_URL:
+        raise HTTPException(
+            status_code=503,
+            detail="Gerador de imagens local não configurado. Defina JARVES_IMAGE_API_URL no servidor.",
+        )
+    parsed = urlsplit(IMAGE_API_URL)
+    if parsed.scheme != "http" or not parsed.hostname or parsed.username or parsed.password or parsed.path not in ("", "/") or parsed.query or parsed.fragment:
+        raise HTTPException(status_code=400, detail="JARVES_IMAGE_API_URL deve ser um endereço HTTP local válido.")
+    try:
+        parsed.port
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail="A porta de JARVES_IMAGE_API_URL é inválida.") from error
+    hostname = parsed.hostname.casefold()
+    if hostname != "localhost":
+        try:
+            address = ipaddress.ip_address(hostname)
+        except ValueError as error:
+            raise HTTPException(
+                status_code=400,
+                detail="Por segurança, o gerador de imagens deve usar localhost ou um IP privado explícito.",
+            ) from error
+        if not address.is_loopback and (not address.is_private or address.is_link_local or address.is_reserved or address.is_multicast or address.is_unspecified):
+            raise HTTPException(status_code=400, detail="O gerador de imagens só pode usar endereço local ou privado.")
+    return IMAGE_API_URL
+
+
+def image_api_request(
+    path: str,
+    payload: dict[str, Any] | None = None,
+    timeout: int = 8,
+    max_response_bytes: int = 2 * 1024 * 1024,
+) -> Any:
+    base = image_api_base()
+    headers = {"Accept": "application/json"}
+    data = None
+    method = "GET"
+    if payload is not None:
+        method = "POST"
+        data = json.dumps(payload).encode("utf-8")
+        headers["Content-Type"] = "application/json"
+    request = urllib.request.Request(f"{base}{path}", data=data, headers=headers, method=method)
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            body = response.read(max_response_bytes + 1)
+            if len(body) > max_response_bytes:
+                raise HTTPException(status_code=413, detail="A resposta do gerador excedeu o limite de tamanho configurado.")
+            return json.loads(body)
+    except urllib.error.HTTPError as error:
+        detail = error.read(500).decode("utf-8", errors="replace")
+        raise HTTPException(status_code=502, detail=f"Gerador de imagens respondeu HTTP {error.code}: {detail}") from error
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as error:
+        raise HTTPException(
+            status_code=503,
+            detail="Gerador de imagens local indisponível. Confira se o serviço está ligado e se a API está habilitada.",
+        ) from error
+
+
+@app.get("/api/images/status")
+def image_generation_status() -> dict[str, Any]:
+    if not IMAGE_API_URL:
+        return {
+            "configured": False,
+            "connected": False,
+            "provider": "Stable Diffusion WebUI / Forge",
+            "message": "Configure JARVES_IMAGE_API_URL no computador que executa o JARVES.",
+        }
+    try:
+        image_api_base()
+        models = image_api_request("/sdapi/v1/sd-models", timeout=4)
+        model_count = len(models) if isinstance(models, list) else 0
+        return {
+            "configured": True,
+            "connected": model_count > 0,
+            "provider": "Stable Diffusion WebUI / Forge",
+            "model_count": model_count,
+            "message": "Gerador local conectado." if model_count else "Serviço respondeu, mas nenhum modelo/checkpoint foi detectado.",
+        }
+    except HTTPException as error:
+        return {
+            "configured": True,
+            "connected": False,
+            "provider": "Stable Diffusion WebUI / Forge",
+            "message": error.detail,
+        }
+
+
+@app.post("/api/images/prompt")
+def create_image_prompt(payload: ImagePromptRequest) -> dict[str, str]:
+    model = selected_ollama_model(payload.model)
+    style = payload.style.strip()
+    system_prompt = (
+        "Você transforma ideias curtas em prompts visuais detalhados para um gerador de imagens. "
+        "Preserve a intenção da pessoa, descreva sujeito, ambiente, iluminação, composição, paleta e estilo. "
+        "Não inclua explicações, apenas o prompt final em português ou inglês conforme a ideia original."
+    )
+    request_text = f"Ideia original: {payload.idea.strip()}\nEstilo desejado: {style or 'livre'}"
+    prompt = generate_artifact_content(
+        model,
+        request_text,
+        system_prompt,
+        max_tokens=512,
+        context_tokens=2048,
+    ).strip()
+    if not prompt:
+        raise HTTPException(status_code=502, detail="O modelo não retornou um prompt visual.")
+    return {"prompt": prompt[:4_000], "model": model}
+
+
+@app.post("/api/images/generate")
+def generate_image_batch(payload: ImageBatchRequest) -> dict[str, Any]:
+    base = image_api_base()
+    generation_started = time.perf_counter()
+    result = image_api_request(
+        "/sdapi/v1/txt2img",
+        {
+            "prompt": payload.prompt.strip(),
+            "negative_prompt": payload.negative_prompt.strip(),
+            "batch_size": payload.count,
+            "n_iter": 1,
+            "width": payload.width,
+            "height": payload.height,
+            "steps": payload.steps,
+        },
+        timeout=240,
+        max_response_bytes=MAX_IMAGE_BATCH_RESPONSE_BYTES,
+    )
+    images = result.get("images") if isinstance(result, dict) else None
+    if not isinstance(images, list) or not images:
+        raise HTTPException(status_code=502, detail="O gerador não retornou imagens.")
+    directory = DATABASE.parent / "generated-images"
+    directory.mkdir(parents=True, exist_ok=True)
+    created: list[dict[str, Any]] = []
+    for encoded in images[: payload.count]:
+        if not isinstance(encoded, str):
+            continue
+        if encoded.startswith("data:image/png;base64,"):
+            encoded = encoded.split(",", 1)[1]
+        try:
+            raw = base64.b64decode(encoded, validate=True)
+        except (ValueError, base64.binascii.Error):
+            continue
+        if len(raw) > MAX_GENERATED_IMAGE_BYTES or len(raw) < 33 or not raw.startswith(b"\x89PNG\r\n\x1a\n") or raw[12:16] != b"IHDR":
+            continue
+        image_id = str(uuid.uuid4())
+        filename = f"{image_id}.png"
+        target = directory / filename
+        with target.open("xb") as stream:
+            stream.write(raw)
+        try:
+            with connect_db() as connection:
+                connection.execute(
+                    "INSERT INTO generated_images (id, filename, prompt, provider, width, height, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (image_id, filename, payload.prompt.strip(), "stable-diffusion-webui", payload.width, payload.height, now()),
+                )
+        except Exception:
+            target.unlink(missing_ok=True)
+            raise
+        created.append({
+            "id": image_id,
+            "url": f"/api/images/{image_id}/file",
+            "prompt": payload.prompt.strip(),
+            "width": payload.width,
+            "height": payload.height,
+            "created_at": now(),
+        })
+    if not created:
+        raise HTTPException(status_code=502, detail="O gerador não retornou arquivos PNG válidos.")
+    return {
+        "provider": "Stable Diffusion WebUI / Forge",
+        "requested_count": payload.count,
+        "generated_count": len(created),
+        "images": created,
+        "generation_seconds": round(time.perf_counter() - generation_started, 2),
+    }
+
+
+@app.get("/api/images")
+def list_generated_images() -> dict[str, Any]:
+    with connect_db() as connection:
+        rows = connection.execute(
+            "SELECT id, prompt, provider, width, height, created_at FROM generated_images ORDER BY created_at DESC LIMIT 100"
+        ).fetchall()
+    return {
+        "images": [
+            {
+                "id": row["id"],
+                "prompt": row["prompt"],
+                "provider": row["provider"],
+                "width": row["width"],
+                "height": row["height"],
+                "created_at": row["created_at"],
+                "url": f"/api/images/{row['id']}/file",
+            }
+            for row in rows
+        ]
+    }
+
+
+@app.get("/api/images/{image_id}/file")
+def get_generated_image(image_id: str):
+    if not re.fullmatch(r"[0-9a-f-]{36}", image_id):
+        raise HTTPException(status_code=404, detail="Imagem não encontrada.")
+    with connect_db() as connection:
+        row = connection.execute(
+            "SELECT filename FROM generated_images WHERE id = ?",
+            (image_id,),
+        ).fetchone()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Imagem não encontrada.")
+    target = (DATABASE.parent / "generated-images" / Path(row["filename"]).name).resolve()
+    expected_directory = (DATABASE.parent / "generated-images").resolve()
+    if target.parent != expected_directory or not target.is_file():
+        raise HTTPException(status_code=404, detail="Arquivo da imagem não encontrado.")
+    return FileResponse(target, media_type="image/png", filename=target.name)
+
+
+@app.delete("/api/images/{image_id}")
+def delete_generated_image(image_id: str) -> dict[str, bool]:
+    if not re.fullmatch(r"[0-9a-f-]{36}", image_id):
+        raise HTTPException(status_code=404, detail="Imagem não encontrada.")
+    with connect_db() as connection:
+        row = connection.execute(
+            "SELECT filename FROM generated_images WHERE id = ?",
+            (image_id,),
+        ).fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="Imagem não encontrada.")
+        connection.execute("DELETE FROM generated_images WHERE id = ?", (image_id,))
+    target = DATABASE.parent / "generated-images" / Path(row["filename"]).name
+    target.unlink(missing_ok=True)
+    return {"deleted": True}
 
 
 @app.post("/api/anime/plan")

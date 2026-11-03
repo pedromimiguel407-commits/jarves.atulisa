@@ -368,3 +368,25 @@ body.light .task-mode-hint, body.light .message-sources { color: #686775; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
+
+
+/* Estúdio Ideias em Imagens */
+.image-studio-grid{display:grid;grid-template-columns:minmax(280px,.9fr) minmax(300px,1.1fr);gap:18px;align-items:start}
+.image-studio-controls{display:grid;gap:12px;min-width:0}
+.image-studio-controls h2{margin:0 0 4px;font-size:1.15rem}
+.image-studio-controls>label{font-size:.72rem;font-weight:800;letter-spacing:.08em;color:var(--muted)}
+.image-studio-controls input,.image-studio-controls textarea,.image-studio-controls select{width:100%;min-width:0;border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:var(--panel-soft);color:var(--text);font:inherit}
+.image-studio-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.image-studio-options label{display:grid;gap:6px;color:var(--muted);font-size:.82rem}
+.image-studio-gallery-panel{min-width:0}
+.image-studio-gallery-panel>header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+.image-gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.generated-image-card{min-width:0;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:var(--panel-soft)}
+.generated-image-card img{display:block;width:100%;aspect-ratio:1;object-fit:cover;background:var(--bg)}
+.generated-image-card .image-card-meta{padding:9px;display:grid;gap:8px}
+.generated-image-card .image-card-meta p{margin:0;color:var(--muted);font-size:.78rem;overflow-wrap:anywhere}
+.generated-image-card .image-card-actions{display:flex;gap:7px;flex-wrap:wrap}
+.generated-image-card .image-card-actions a,.generated-image-card .image-card-actions button{font:inherit;font-size:.75rem;padding:7px 9px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--text);text-decoration:none;cursor:pointer}
+#image-generation-status{min-height:2.5em}
+@media(max-width:760px){.image-studio-grid{grid-template-columns:minmax(0,1fr)}.image-gallery-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){.image-studio-grid *{scroll-behavior:auto;transition:none!important}}

@@ -1,8 +1,9 @@
-const CACHE_NAME = 'jarves-shell-v25';
+const CACHE_NAME = 'jarves-shell-v26';
 const APP_SHELL = [
   '/',
   '/styles.css',
   '/app.js',
+  '/images-studio.js',
   '/anime-studio.js',
   '/downloads.html',
   '/autosave.js',

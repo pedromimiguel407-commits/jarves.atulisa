@@ -47,6 +47,9 @@ if [ -f "$PROJECT_ROOT/.env" ]; then
       JARVES_ACCESS_TOKEN)
         if [ -z "${JARVES_ACCESS_TOKEN:-}" ]; then export "JARVES_ACCESS_TOKEN=$env_value"; fi
         ;;
+      JARVES_IMAGE_API_URL)
+        if [ -z "${JARVES_IMAGE_API_URL:-}" ]; then export "JARVES_IMAGE_API_URL=$env_value"; fi
+        ;;
     esac
   done < "$PROJECT_ROOT/.env"
 fi

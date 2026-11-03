@@ -121,7 +121,8 @@ public class MainActivity extends Activity {
         getWindow().setNavigationBarColor(0xFF080D1A);
         buildUi();
         pendingServerUrl = getPreferences(MODE_PRIVATE).getString(KEY_URL, "");
-        loading.setText("Aguardando conexão Wi-Fi...");
+        loading.setText("JARVES AI · modo independente pronto");
+        loadOfflineHome();
     }
 
     @Override protected void onStart() {
@@ -133,8 +134,8 @@ public class MainActivity extends Activity {
             connectivityManager.registerNetworkCallback(wifiRequest, wifiNetworkCallback);
             networkCallbackRegistered = true;
             Network network = findWifiNetwork();
-            if (network != null) connectToWifiNetwork(network);
-            else loading.setText("Conecte o Android à rede Wi-Fi do computador para localizar o JARVES.");
+            if (network != null && !pendingServerUrl.isEmpty()) connectToWifiNetwork(network);
+            else if (pendingServerUrl.isEmpty()) loading.setText("Modo independente · nenhum computador necessário para abrir o menu.");
         } catch (RuntimeException error) {
             Log.e("JARVES", "Não foi possível acompanhar a conexão Wi-Fi.", error);
         }
@@ -214,8 +215,9 @@ public class MainActivity extends Activity {
             }
             @Override public void onPageFinished(WebView view, String url) {
                 serverUrlLoadPending = false;
-                serverConnected = true;
-                serverConnectionStatus = "connected";
+                boolean localHome = url != null && url.startsWith("https://appassets.androidplatform.net/");
+                serverConnected = !localHome;
+                serverConnectionStatus = localHome ? "offline" : "connected";
                 loading.setVisibility(View.GONE);
             }
             @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
@@ -262,11 +264,26 @@ public class MainActivity extends Activity {
         setContentView(root);
     }
 
+    private void loadOfflineHome() {
+        try (InputStream input = getAssets().open("offline.html");
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[4096];
+            int count;
+            while ((count = input.read(buffer)) != -1) output.write(buffer, 0, count);
+            String html = output.toString(StandardCharsets.UTF_8.name());
+            webView.loadDataWithBaseURL("https://appassets.androidplatform.net/assets/", html,
+                "text/html", StandardCharsets.UTF_8.name(), null);
+        } catch (Exception error) {
+            Log.e("JARVES", "Não foi possível abrir o menu independente.", error);
+            loading.setText("Falha ao carregar o menu local. Reinstale o APK.");
+        }
+    }
+
     private void showServerDialog() {
         if (serverDialog != null && serverDialog.isShowing()) return;
         final EditText input = new EditText(this);
         input.setSingleLine(true);
-        input.setHint("http://192.168.1.10:3000");
+        input.setHint("http://192.168.1.10:8000");
         input.setText(pendingServerUrl.isEmpty()
             ? getPreferences(MODE_PRIVATE).getString(KEY_URL, "")
             : pendingServerUrl);
@@ -277,7 +294,7 @@ public class MainActivity extends Activity {
         AlertDialog dialog = new AlertDialog.Builder(this)
             .setTitle("Conectar ao JARVES AI")
             .setMessage(serverErrorMessage.isEmpty()
-                ? "Não encontrei um servidor JARVES na rede Wi-Fi. Inicie o JARVES no computador na mesma rede ou informe o endereço do servidor."
+                ? "Nenhuma API JARVES foi encontrada. Informe o endereço de uma API disponível ou continue no modo independente do celular."
                 : serverErrorMessage)
             .setView(box)
             .setCancelable(false)
@@ -318,7 +335,6 @@ public class MainActivity extends Activity {
             Log.w("JARVES", "Não foi possível associar o app à rede Wi-Fi ativa.");
         }
         if (!pendingServerUrl.isEmpty()) verifyManualServer(pendingServerUrl);
-        else if (!serverConnected && !serverUrlLoadPending) startDiscovery();
     }
 
     private void verifyManualServer(String serverUrl) {
@@ -345,7 +361,7 @@ public class MainActivity extends Activity {
                 } else {
                     serverConnectionStatus = "error";
                     serverErrorMessage = "Não consegui validar " + serverUrl + ": " + result
-                        + ". Confirme o endereço, a porta 3000, a rede Wi-Fi e o firewall do computador.";
+                        + ". Confirme o endereço, a porta 8000 por padrão, a rede Wi-Fi e o firewall do computador.";
                     loading.setText("Servidor não respondeu · confira o endereço e tente novamente.");
                     showServerDialog();
                 }
@@ -654,6 +670,10 @@ public class MainActivity extends Activity {
                 if (speechRecognizer != null) speechRecognizer.cancel();
                 speechStartPending = false;
             });
+        }
+
+        @JavascriptInterface public void openServerSettings() {
+            mainHandler.post(() -> showServerDialog());
         }
 
         @JavascriptInterface public String getServerUrl() {

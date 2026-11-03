@@ -1,177 +1,543 @@
 <!doctype html>
-<html lang="pt-BR" data-theme="dark">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#080d1a">
-<meta name="description" content="Interface responsiva PC e celular do JARVES AI.">
-<title>JARVES AI</title>
-<link rel="manifest" href="/manifest.json">
-<link rel="icon" href="/assets/icon-192.png">
-<link rel="stylesheet" href="/styles/main.css">
-</head>
-<body>
-<canvas id="particles" aria-hidden="true"></canvas>
-<div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
-<div class="app-shell">
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <a class="brand" href="/" aria-label="JARVES AI início"><span class="brand-mark" id="brandMark">J</span><span><b id="brandName">JARVES AI</b><small>2.3.7 · MEGA UPDATE</small></span></a>
-      <button class="icon-btn mobile-close" id="btnCloseSidebar" aria-label="Fechar menu">×</button>
-    </div>
-    <nav class="tool-nav primary-nav" aria-label="Navegação principal">
-      <button class="nav-btn active" data-view="chat" type="button"><span>✧</span> Chat</button>
-      <a class="nav-btn" href="/download.html"><span>⇩</span> Baixar aplicativo</a>
-    </nav>
-    <button class="primary-btn new-chat" id="btnNewChat"><span>＋</span> Nova conversa</button>
-    <div class="history-tools" id="historyTools">
-      <label class="search-wrap"><span>⌕</span><input type="search" id="searchHistory" placeholder="Buscar conversas..." aria-label="Pesquisar histórico"></label>
-      <button class="secondary-btn" id="btnUnifyChats" type="button" title="Copiar o histórico de todas as conversas para um chat único, sem apagar as originais">Unificar conversas</button>
-      <div class="side-label">CONVERSAS</div>
-      <nav class="sidebar-nav" id="convList" aria-label="Conversas"></nav>
-    </div>
-    <div class="sidebar-bottom"><span class="online-dot"></span><span id="aiRuntimeStatus" role="status">Verificando provedor de IA...</span><small>v2.3.7</small></div>
-  </aside>
-  <button class="overlay" id="overlay" aria-label="Fechar menu"></button>
-  <main class="main">
-    <header class="topbar">
-      <div class="topbar-left"><button class="icon-btn menu-btn" id="btnMenu" aria-label="Abrir menu" aria-expanded="false">☰</button><div><div class="topbar-title" id="convTitle">Nova conversa</div><div class="topbar-subtitle" id="providerSubtitle">Seu espaço de inteligência</div></div></div>
-      <div class="topbar-actions">
-        <select id="modelSelect" aria-label="Selecionar modelo"><option value="">Modelo automático</option></select>
-        <button class="secondary-btn" id="btnChatTools" type="button" aria-expanded="false" aria-controls="chatTools">Ferramentas</button>
-        <button class="secondary-btn" id="btnBackToChat" type="button" hidden>← Chat</button>
-        <button class="icon-btn" id="btnTheme" aria-label="Alternar tema" title="Alternar tema">◐</button>
-        <button class="icon-btn" id="btnClear" aria-label="Limpar tela" title="Limpar tela">⌫</button>
-        <button class="icon-btn" id="btnExport" aria-label="Exportar conversa" title="Exportar conversa">⇩</button>
-      </div>
-    </header>
-    <section class="view view-chat" id="view-chat">
-      <div class="chat-area" id="chatArea" role="log" aria-live="polite">
-        <div class="welcome" id="welcomePanel"><div class="welcome-orb" id="welcomeOrb">J</div><p class="eyebrow"><span id="welcomeAiName">JARVES AI</span> · 2.3.7</p><h1>Como posso ajudar<br><span>você hoje?</span></h1><p class="welcome-copy">Pergunte, crie, programe ou organize suas ideias. Sua próxima descoberta começa aqui.</p><div class="welcome-chips"><button type="button" data-prompt="Explique como você pode me ajudar.">✦ Conhecer o JARVES</button><button type="button" data-prompt="Ajude-me a criar um projeto de software.">⌘ Criar um projeto</button><button type="button" data-prompt="Analise este código e sugira melhorias.">⌁ Analisar código</button></div></div>
-      </div>
-      <section class="chat-tools panel" id="chatTools" aria-label="Ferramentas do Chat" hidden>
-        <div class="row html-test-toolbar"><div><h3>Ferramentas do Chat</h3><p class="muted-copy">Abra recursos sem sair do espaço principal do Chat.</p></div><button class="icon-btn" id="btnCloseChatTools" type="button" aria-label="Fechar ferramentas">×</button></div>
-        <div class="card-grid chat-tool-grid">
-          <button type="button" data-chat-tool="gerador"><strong>✦ Gerador 2D/3D</strong><small>SVG, modelos 3D e HTML interativo</small></button>
-          <button type="button" data-chat-tool="voice-studio"><strong>♫ Voz e vídeo</strong><small>Narração e prévia de vídeo local</small></button>
-          <button type="button" data-chat-tool="html-tests"><strong>⌘ Testes HTML</strong><small>Verificações e diagnóstico do sistema</small></button>
-          <button type="button" data-chat-tool="reports"><strong>▤ Relatórios</strong><small>Resultados de erros e bugs</small></button>
-          <button type="button" data-chat-tool="agents"><strong>✧ Agentes</strong><small>Assistentes especializados</small></button>
-          <button type="button" data-chat-tool="tasks"><strong>◷ Tarefas</strong><small>Planejar e acompanhar etapas</small></button>
-          <button type="button" data-chat-tool="files"><strong>▤ Arquivos e código</strong><small>Importar, revisar e analisar</small></button>
-          <button type="button" data-chat-tool="memory"><strong>◈ Memória</strong><small>Notas e contexto persistente</small></button>
-          <button type="button" data-chat-tool="settings"><strong>⚙ Configurações</strong><small>Voz, visual, IA e preferências</small></button>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#101116">
+    <meta name="description" content="JARVES AI: assistente de IA gratuito com modelos locais.">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Jarves AI">
+    <title>JARVES AI — Assistente local</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/connection-manager.js" defer></script>
+    <script src="/error-engine/error-engine.js" defer></script>
+    <script src="/autosave.js" defer></script>
+    <script src="/anime-studio.js" defer></script>
+    <script src="/app.js" defer></script>
+    <script src="/images-studio.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <a class="brand" href="/" aria-label="JARVES AI, início">
+          <span class="brand-mark" aria-hidden="true">J</span>
+          <span>JARVES<span class="brand-light"> AI</span></span>
+        </a>
+        <button class="new-chat" id="new-chat" type="button"><span aria-hidden="true">＋</span> Nova conversa</button>
+        <nav class="tool-nav" aria-label="Ferramentas">
+          <button class="tool-nav-button active" type="button" data-view="chat-view"><span>◉</span> Chat</button>
+          <button class="tool-nav-button" type="button" data-view="html-view"><span>&lt;/&gt;</span> Testar HTML</button>
+          <button class="tool-nav-button" type="button" data-view="image3d-view"><span>◇</span> Imagem e 3D IA</button>
+          <button class="tool-nav-button" type="button" data-view="images-view"><span>✦</span> Ideias em Imagens</button>
+          <button class="tool-nav-button" type="button" data-view="video-view"><span>♫</span> Estúdio Anime</button>
+          <button class="tool-nav-button" type="button" data-view="files-view"><span>▤</span> Gerenciar arquivos</button>
+          <button class="tool-nav-button" type="button" data-view="memory-view"><span>▧</span> Memória</button>
+          <button class="tool-nav-button" type="button" data-view="logic-view"><span>⌘</span> Lógica</button>
+          <button class="tool-nav-button" type="button" data-view="errors-view"><span>⚠</span> Diagnóstico</button>
+        </nav>
+        <div class="section-label">RECENTES</div>
+        <input class="history-search" id="history-search" type="search" maxlength="100" placeholder="Buscar conversas…" aria-label="Buscar conversas">
+        <nav class="history-list" id="history-list" aria-label="Histórico de conversas"></nav>
+        <div class="sidebar-bottom">
+          <div class="local-note"><span class="status-dot" id="status-dot"></span><span id="connection-label">Verificando Ollama…</span></div>
+          <a class="sidebar-link" href="https://github.com/" target="_blank" rel="noreferrer">Código aberto <span aria-hidden="true">↗</span></a>
+          <a class="sidebar-link" href="/downloads.html">Baixar JARVES</a>
         </div>
-      </section>
-      <div class="suggestions" id="suggestions"></div>
-      <div class="composer-wrap"><div class="composer">
-        <textarea id="input" placeholder="Envie uma mensagem ao JARVES..." rows="1" aria-label="Mensagem"></textarea>
-        <div class="composer-tools"><span class="composer-hint">Enter envia · Shift + Enter quebra linha · Voz: diga “enviar”, “limpar texto”, “novo chat” ou “parar resposta”</span><div class="composer-actions"><button class="secondary-btn" id="btnVoice" type="button" aria-label="Ditado e comandos de voz: enviar pedido, limpar texto, novo chat ou parar resposta" aria-pressed="false" title="O reconhecimento usa o serviço de voz do navegador ou do Android; internet pode ser necessária.">◖ Voz</button><button class="danger-btn" id="btnStop" type="button" disabled>Parar</button><button class="send-btn" id="btnSend" type="button" aria-label="Enviar mensagem">↑</button></div></div>
-        <div class="status-bar voice-command-status" id="voiceCommandStatus" role="status" aria-live="polite"></div>
-      </div><div class="status-bar" id="statusBar">A IA pode cometer erros. Verifique informações importantes.</div></div>
-    </section>
-    <section class="view content-view" id="view-voice-studio" hidden>
-      <div class="page-heading"><p class="eyebrow">ESTÚDIO LOCAL</p><h1>Voz e vídeo</h1><p>Use a voz instalada no dispositivo e visualize um vídeo local, sem enviar o arquivo ao servidor.</p></div>
-      <div class="panel">
-        <h3>Texto da narração</h3>
-        <p class="muted-copy">A voz, o idioma, o tom e a velocidade usam as preferências de Configurações. A disponibilidade e o modo offline dependem do navegador e da voz instalada.</p>
-        <label for="studioNarration">Texto para falar</label>
-        <textarea id="studioNarration" maxlength="12000" placeholder="Escreva ou cole o texto da narração (até 12.000 caracteres)."></textarea>
-        <div class="row"><button class="primary-btn" id="btnSpeakNarration" type="button">Falar texto</button><button class="secondary-btn" id="btnPlayAndSpeak" type="button">Reproduzir vídeo e falar</button><button class="secondary-btn" id="btnStopStudio" type="button">Parar voz/vídeo</button><button class="secondary-btn" id="btnExportNarration" type="button">Exportar texto TXT</button></div>
-        <div id="studioVoiceStatus" class="status" aria-live="polite"></div>
-      </div>
-      <div class="panel">
-        <h3>Pré-visualizar vídeo local</h3>
-        <p class="muted-copy">O arquivo fica no dispositivo e não é enviado. Esta prévia não mistura nem exporta a voz dentro do arquivo de vídeo.</p>
-        <label for="studioVideoFile">Escolher vídeo (máx. 250 MB)</label>
-        <input id="studioVideoFile" type="file" accept="video/mp4,video/webm,video/quicktime,video/x-m4v,.mp4,.webm,.mov,.m4v">
-        <video id="studioVideo" controls playsinline hidden></video>
-        <div id="studioVideoStatus" class="status" aria-live="polite">Selecione um vídeo suportado pelo navegador para visualizar.</div>
-      </div>
-    </section>
-    <section class="view content-view" id="view-html-tests" hidden>
-      <div class="page-heading"><p class="eyebrow">QUALIDADE DO SISTEMA</p><h1>Testes HTML e diagnóstico</h1><p>Verifique a interface, o navegador e a conexão; exporte um relatório para investigar falhas.</p></div>
-      <div class="panel html-test-panel">
-        <div class="row html-test-toolbar"><div><h3>Testes do aplicativo</h3><p class="muted-copy">Os testes são locais e não alteram seus dados. Rode novamente quando precisar.</p></div><span id="htmlTestProgress" class="html-test-progress">0%</span></div>
-        <div id="htmlTestSummary" class="status" aria-live="polite">Os testes ainda não foram executados.</div>
-        <div class="row"><button class="primary-btn" id="btnRunHtmlTests" type="button">Executar testes</button><button class="secondary-btn" id="btnExportHtmlTests" type="button">Exportar relatório JSON</button></div>
-        <div id="htmlTestResults" class="html-test-results" aria-live="polite"></div>
-      </div>
-      <div class="panel">
-        <h3>Diagnóstico do sistema</h3>
-        <p class="muted-copy">Verifique a saúde do servidor, a latência e os testes internos.</p>
-        <div class="row"><button class="secondary-btn" id="btnRunDiag" type="button">Gerar diagnóstico do sistema</button><button class="secondary-btn" id="btnSpeedTest" type="button">Testar conexão</button><a class="secondary-btn" href="/api/diagnostics/export?format=txt" target="_blank" rel="noopener">Relatório TXT ↗</a><a class="secondary-btn" href="/api/diagnostics/export?format=json" target="_blank" rel="noopener">Relatório JSON ↗</a></div>
-        <div id="diagSummary" class="status" aria-live="polite"></div><div id="diagErrors" class="list"></div><pre id="diagRaw" class="result-box"></pre>
-      </div>
-    </section>
-    <section class="view content-view" id="view-agents" hidden><div class="page-heading"><p class="eyebrow">AUTOMAÇÃO INTELIGENTE</p><h1>Agentes especializados</h1><p>Escolha um agente e delegue uma tarefa.</p></div><div class="card-grid" id="agentsGrid"></div><div class="panel"><h3>Executar agente</h3><select id="agentSelect"></select><textarea id="agentTask" placeholder="Descreva a tarefa para o agente..."></textarea><button class="primary-btn" id="btnRunAgent">Executar agente</button><pre id="agentResult" class="result-box"></pre></div></section>
-    <section class="view content-view" id="view-tasks" hidden><div class="page-heading"><p class="eyebrow">ORGANIZAÇÃO</p><h1>Planejamento de tarefas</h1><p>Transforme objetivos em etapas organizadas.</p></div><div class="panel"><textarea id="taskGoal" placeholder="Descreva seu objetivo..."></textarea><div class="row"><button class="primary-btn" id="btnPlan">Criar planejamento</button><button class="secondary-btn" id="btnRunTask">Criar e executar</button></div><pre id="planPreview" class="result-box"></pre></div><h3>Tarefas</h3><div id="taskList" class="list"></div></section>
-    <section class="view content-view" id="view-files" hidden><div class="page-heading"><p class="eyebrow">ESPAÇO DE TRABALHO</p><h1>Arquivos e código</h1><p>Importe arquivos, baixe links públicos ou peça uma análise de código.</p></div><div class="panel"><h3>Baixar um arquivo da rede</h3><p class="muted-copy">Cole um link público HTTP/HTTPS para salvar PDF, imagem, áudio, vídeo, ZIP ou outro arquivo. O tamanho máximo segue o limite configurado para uploads. Endereços locais e privados são bloqueados.</p><label for="networkFileUrl">Link do arquivo</label><input id="networkFileUrl" type="url" inputmode="url" placeholder="https://exemplo.com/arquivo.pdf" autocomplete="url"><div class="row"><button class="primary-btn" id="btnDownloadNetworkFile" type="button">Baixar arquivo</button><span id="networkDownloadStatus" class="status" role="status" aria-live="polite"></span></div></div><div class="panel"><h3>Importar deste dispositivo</h3><input type="file" id="fileInput" multiple><button class="primary-btn" id="btnUpload">Importar arquivos</button><div id="uploadStatus" class="status"></div></div><div id="fileList" class="list"></div><div class="panel"><h3>Analisar código</h3><textarea id="codeInput" placeholder="Cole seu código aqui..."></textarea><button class="primary-btn" id="btnAnalyzeCode">Analisar código</button><pre id="codeAnalysis" class="result-box"></pre></div></section>
-    <section class="view content-view" id="view-memory" hidden><div class="page-heading"><p class="eyebrow">CONTEXTO PERSISTENTE</p><h1>Memória</h1><p>Organize informações úteis para suas conversas.</p></div><div class="panel"><input id="memSubject" placeholder="Assunto"><textarea id="memContent" placeholder="Conteúdo..."></textarea><select id="memKind"><option value="note">Nota</option><option value="preference">Preferência</option><option value="fact">Fato</option></select><button class="primary-btn" id="btnSaveMem">Salvar memória</button></div><input type="search" id="memSearch" placeholder="Pesquisar memória..."><div id="memList" class="list"></div></section>
-    <section class="view content-view" id="view-reports" hidden><div class="page-heading"><p class="eyebrow">QUALIDADE DO SISTEMA</p><h1>Relatórios e correções</h1></div><div class="row"><a class="secondary-btn" href="/diagnostico" target="_blank" rel="noopener">Abrir relatório HTML ↗</a><button class="primary-btn" id="btnRefreshReports">Atualizar</button></div><div id="resolvedBugs" class="list"></div><pre id="reportRaw" class="result-box"></pre></section>
-    <section class="view content-view settings-view" id="view-settings" hidden>
-      <div class="page-heading"><p class="eyebrow">SEU ASSISTENTE</p><h1>Configurações</h1><p>Personalize a identidade, a voz, as cores e o provedor de IA.</p></div>
-      <div class="panel"><h3>Identidade e aparência</h3><div class="form-grid">
-        <label>Nome da IA<input id="aiDisplayName" maxlength="32" placeholder="JARVES AI"></label>
-        <label>Cor principal<input id="accentColor" type="color" value="#7c8cff"></label>
-        <label class="toggle-label"><input id="rgbMode" type="checkbox"> Efeito RGB animado</label>
-        <label>Tema<select id="appearanceTheme"><option value="dark">Escuro</option><option value="light">Claro</option></select></label>
-      </div>
-      <div class="avatar-setting">
-        <img id="aiAvatarPreview" alt="Prévia da imagem da IA">
-        <div class="avatar-setting-controls"><label for="aiAvatarInput">Imagem/avatar da IA</label><input id="aiAvatarInput" type="file" accept="image/png,image/jpeg,image/webp"><p class="muted-copy">Imagem quadrada salva neste dispositivo e exibida no menu e no chat (máx. 5 MB).</p><button class="secondary-btn" id="btnResetAiAvatar" type="button">Usar inicial do nome</button></div>
-      </div>
-      <div class="launcher-icon-setting"><label for="launcherIcon">Ícone do APK na tela inicial do Android</label><select id="launcherIcon"><option value="default">JARVES AI · azul</option><option value="robot">JARVES AI · turquesa</option></select><p class="muted-copy">No APK, escolha um dos ícones incluídos. Fora do APK esta opção não fica disponível.</p><div id="launcherIconStatus" class="status" aria-live="polite"></div></div>
-      <button class="primary-btn" id="btnSaveAppearance" type="button">Salvar aparência</button><div id="appearanceStatus" class="status" aria-live="polite"></div></div>
-      <div class="panel" id="androidServerPanel">
-        <h3>Servidor para este celular</h3>
-        <p class="muted-copy">O APK funciona como cliente e conecta ao servidor JARVES em outro computador na mesma rede. Hospedar o backend e executar a IA dentro do próprio Android ainda não é suportado; esta configuração não instala nem executa Ollama no telefone.</p>
-        <label for="androidServerUrl">Endereço do servidor JARVES</label>
-        <input id="androidServerUrl" type="url" inputmode="url" placeholder="http://192.168.1.10:3000" autocomplete="url">
-        <div class="row"><button class="primary-btn" id="btnConnectAndroidServer" type="button">Validar e conectar</button><span id="androidServerStatus" class="status" role="status" aria-live="polite"></span></div>
-      </div>
-      <div class="panel"><h3>Voz do navegador</h3><p class="muted-copy">A voz e a entrada por microfone usam os recursos instalados no seu dispositivo/navegador; elas não alteram a voz do modelo de texto.</p><div class="form-grid">
-        <label>Idioma da voz<select id="speechLanguage"><option value="pt-BR">Português (Brasil)</option><option value="pt-PT">Português (Portugal)</option><option value="en-US">English (US)</option><option value="es-ES">Español</option></select></label>
-        <label>Voz instalada<select id="speechVoice"><option value="">Voz padrão do dispositivo</option></select></label>
-        <label>Velocidade da fala <output id="speechRateValue">1×</output><input id="speechRate" type="range" min="0.7" max="1.3" step="0.1" value="1"></label>
-        <label>Tom da fala <output id="speechPitchValue">1×</output><input id="speechPitch" type="range" min="0.7" max="1.3" step="0.1" value="1"></label>
-      </div><div class="row"><button class="secondary-btn" id="btnTestVoice" type="button">Testar voz</button><span id="voiceStatus" class="status" aria-live="polite"></span></div></div>
-      <div class="panel" id="workflowPanel">
-        <h3>Fluxo de criação: pesquisar, planejar e executar</h3>
-        <p class="muted-copy">A pesquisa web é opcional e envia a consulta ao DuckDuckGo. A IA usa o provedor selecionado para planejar; provedores remotos podem cobrar, então escolha Ollama para evitar cobrança por chamada. Revise e confirme antes de executar: as etapas geram respostas/código como texto, não rodam programas nem criam APK/EXE.</p>
-        <label for="workflowGoal">O que você quer pesquisar e construir?</label>
-        <textarea id="workflowGoal" maxlength="4000" placeholder="Descreva o objetivo ou projeto (até 4.000 caracteres)."></textarea>
-        <div class="row">
-          <button class="secondary-btn" id="btnWorkflowResearch" type="button">1 · Pesquisar na web</button>
-          <button class="secondary-btn" id="btnWorkflowPlan" type="button" disabled>2 · Criar plano</button>
-          <button class="primary-btn" id="btnWorkflowCreate" type="button" disabled>Confirmar plano</button>
-          <button class="primary-btn" id="btnWorkflowExecute" type="button" disabled>3 · Executar etapas de IA</button>
-        </div>
-        <div id="workflowStatus" class="status" aria-live="polite">Ative “Pesquisa web” nas configurações de IA para liberar a etapa de pesquisa.</div>
-        <div id="workflowSources" class="list"></div>
-        <ol id="workflowPlan" class="list"></ol>
-        <pre id="workflowResult" class="result-box"></pre>
-        <button class="secondary-btn" id="btnWorkflowPreview" type="button" disabled>Pré-visualizar HTML em sandbox</button>
-        <iframe id="workflowPreview" title="Pré-visualização isolada do HTML gerado" sandbox="allow-scripts" hidden></iframe>
-      </div>
-      <div class="panel">
-        <h3>Ajuda para corrigir um erro</h3>
-        <p class="muted-copy">Cole a mensagem de erro ou código, ou carregue um arquivo de texto/código. O assistente prepara uma sugestão no Chat para você revisar; nada é executado nem alterado automaticamente.</p>
-        <label for="repairInput">Erro, relatório ou código</label>
-        <textarea id="repairInput" maxlength="40000" placeholder="Cole aqui o erro, o relatório ou o trecho de código (até 40.000 caracteres)."></textarea>
-        <label for="repairFile">Carregar arquivo de texto/código (máx. 500 KB)</label>
-        <input id="repairFile" type="file" accept=".txt,.log,.js,.mjs,.cjs,.html,.css,.json,.md,text/plain,text/html,text/css,application/json">
-        <div class="row"><button class="primary-btn" id="btnAskFix" type="button">Preparar análise no Chat</button><span id="repairStatus" class="status" aria-live="polite"></span></div>
-      </div>
-      <div class="panel"><h3>Provedor e conexão</h3><p class="muted-copy">Para evitar cobranças por uso de API, escolha Ollama local. Baixar modelos consome internet e espaço; a geração usa o hardware do computador/servidor.</p><div class="panel form-grid" id="settingsForm"></div><div class="row"><button class="primary-btn" id="btnSaveSettings">Salvar configurações de IA</button><button class="secondary-btn" id="btnTestProvider">Testar conexão</button></div><div id="settingsStatus" class="status" aria-live="polite"></div></div>
-      <div class="panel"><div class="row section-title-row"><div><h3>Modelos locais</h3><p class="muted-copy">A lista vem do provedor. Modelos Ollama são processados localmente.</p></div><button class="secondary-btn" id="btnRefreshModels" type="button">Atualizar lista</button></div><div id="modelManagerStatus" class="status" aria-live="polite"></div><div class="model-install-row"><input id="ollamaPullName" type="text" placeholder="Ex.: qwen3.5:4b" aria-label="Nome do modelo Ollama"><button class="primary-btn" id="btnPullModel" type="button">Baixar modelo Ollama</button></div><div id="modelManagerList" class="model-manager-list"></div></div>
-      <div class="panel"><h3>API key remota (opcional)</h3><p class="muted-copy">Provedores remotos podem cobrar. O JARVES não cria chaves; a chave salva fica protegida e nunca é exibida novamente.</p><label class="secret-field-label" for="apiKeyInput">API key do provedor compatível</label><div class="secret-input-row"><input id="apiKeyInput" type="password" autocomplete="new-password" placeholder="Cole sua chave aqui"><button class="secondary-btn" id="btnSaveApiKey" type="button">Salvar chave</button></div><div id="apiKeyStatus" class="status" aria-live="polite"></div><button class="danger-btn" id="btnDeleteApiKey" type="button">Remover chave salva</button><div class="model-cost-note"><p class="muted-copy">GPT-6.1 Sol (`gpt-6.1-sol`) é um modelo de API pago. Só aparece se o provedor remoto o listar.</p><a href="https://developers.openai.com/api/docs/models/gpt-6.1-sol" target="_blank" rel="noopener noreferrer">Documentação e preços ↗</a></div></div>
-    </section>
-  </main>
-</div>
-<script src="/scripts/api.js"></script><script src="/scripts/state.js"></script><script src="/scripts/ui.js"></script><script src="/scripts/particles.js"></script><script src="/scripts/app.js"></script><script src="/scripts/base-engine.js"></script><script src="/scripts/gerador.js"></script><script src="/scripts/html-tests.js"></script>
-<script>
-document.querySelectorAll('[data-prompt]').forEach(b=>b.addEventListener('click',()=>{const i=document.getElementById('input');i.value=b.dataset.prompt;i.focus();}));
-</script>
+      </aside>
 
-</body></html>
+      <main class="main">
+        <header class="topbar">
+          <button class="mobile-menu" id="mobile-menu" type="button" aria-label="Abrir menu">☰</button>
+          <div class="model-picker">
+            <label for="model-select">Modelo</label>
+            <select id="model-select" aria-label="Selecionar modelo"><option value="">Carregando…</option></select>
+          </div>
+          <div class="topbar-actions">
+            <span class="autosave-indicator" id="autosave-status" role="status" aria-live="polite" data-state="saved">Salvamento local ativo</span>
+            <time class="clock-display" id="clock-display" aria-label="Horário local"></time>
+            <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Alternar tema">◐ <span>Tema</span></button>
+            <button class="profile-button" id="open-profile" type="button" aria-label="Editar perfil local">
+              <span class="profile-avatar" id="profile-avatar" aria-hidden="true"><span id="profile-avatar-fallback">U</span><img id="profile-avatar-image" alt="" hidden></span>
+              <span class="profile-button-name" id="profile-button-name">Usuário</span>
+            </button>
+            <button class="settings-button" id="open-settings" type="button" aria-label="Abrir configurações">⚙ <span>Configurações</span></button>
+            <button class="install-button" id="install-app" type="button" hidden>Instalar app</button>
+          </div>
+        </header>
+
+        <section class="tab-view active" id="chat-view">
+        <section class="conversation" aria-live="polite">
+          <div class="welcome" id="welcome">
+            <div class="welcome-orb" aria-hidden="true"><span>J</span></div>
+            <p class="eyebrow">INTELIGÊNCIA LOCAL · CÓDIGO ABERTO</p>
+            <h1>Olá. O que vamos<br><span>criar hoje?</span></h1>
+            <p class="welcome-copy">Converse com modelos de IA executados no seu computador.<br>Suas conversas ficam armazenadas localmente.</p>
+            <div class="suggestions">
+              <button type="button" class="suggestion" data-prompt="Explique inteligência artificial em termos simples."><span>✦</span><strong>Aprender algo</strong><small>Explique um conceito com clareza</small></button>
+              <button type="button" class="suggestion" data-prompt="Ajude-me a planejar um projeto pessoal."><span>⌘</span><strong>Planejar um projeto</strong><small>Organize minhas ideias em etapas</small></button>
+              <button type="button" class="suggestion" data-prompt="Escreva uma função Python que valide um endereço de e-mail e explique como ela funciona."><span>&lt;/&gt;</span><strong>Escrever código</strong><small>Crie e explique uma solução</small></button>
+            </div>
+          </div>
+          <div class="messages" id="messages"></div>
+        </section>
+
+        <div class="composer-wrap">
+          <form class="composer" id="chat-form">
+            <div class="attachment-chips" id="attachment-chips" aria-live="polite"></div>
+            <div class="task-controls">
+              <label class="task-picker" for="task-mode"><span>Tarefa</span>
+                <select id="task-mode">
+                  <option value="chat">Chat</option>
+                  <option value="request">Atender pedido</option>
+                  <option value="plan">Plano em etapas</option>
+                  <option value="research">Pesquisa online</option>
+                  <option value="bug">Diagnosticar bug</option>
+                </select>
+              </label>
+              <label class="fast-mode-toggle" title="Quando ativado, mantém o modelo carregado por 10 minutos, reduz o histórico, usa contexto de 4096 tokens e limita a resposta a 1024 tokens.">
+                <input id="fast-mode" type="checkbox">
+                <span>⚡ Rápido</span>
+              </label>
+              <label class="fast-mode-toggle" title="As memórias salvas só serão enviadas ao modelo quando esta opção estiver marcada.">
+                <input id="use-memory" type="checkbox">
+                <span>▧ Usar memória</span>
+              </label>
+            </div>
+            <p class="task-mode-hint" id="task-mode-hint" aria-live="polite">Conversa local com o modelo selecionado.</p>
+            <textarea id="message-input" rows="1" maxlength="20000" placeholder="Pergunte qualquer coisa…" aria-label="Sua mensagem" required></textarea>
+            <div class="composer-footer">
+              <span class="privacy" id="model-privacy" role="status" aria-live="polite"><span aria-hidden="true">⌂</span> Modelo local · sem assinatura ou API paga</span>
+              <div class="composer-actions">
+                <input id="chat-file-input" type="file" accept=".txt,.pdf,text/plain,application/pdf" multiple hidden>
+                <button class="composer-tool" id="attach-file" type="button" aria-label="Anexar TXT ou PDF" title="Anexar TXT ou PDF">＋</button>
+                <button class="composer-tool" id="voice-input" type="button" aria-label="Ditado por voz" title="Ditado por voz">🎙</button>
+                <button class="send-button" id="send-button" type="submit" aria-label="Enviar mensagem">↑</button>
+              </div>
+            </div>
+          </form>
+          <p class="disclaimer">O modo rápido limita respostas longas. A velocidade também depende do modelo e do hardware.</p>
+        </div>
+        </section>
+
+        <section class="tab-view tool-view" id="html-view" hidden>
+          <div class="tool-heading">
+            <div><p class="eyebrow">FERRAMENTA LOCAL</p><h1>Testar <span>HTML</span></h1><p>Escreva HTML, CSS e JavaScript e veja o resultado em um quadro isolado.</p></div>
+            <div class="tool-buttons"><button class="secondary-button" id="load-html-game" type="button">Jogar exemplo</button><button class="secondary-button" id="download-html" type="button">Baixar .html</button><button class="save-button" id="run-html" type="button">▶ Executar</button></div>
+          </div>
+          <div class="html-workspace">
+            <label class="editor-pane"><span>EDITOR</span><textarea id="html-editor" spellcheck="false" aria-label="Código HTML de teste"></textarea></label>
+            <div class="preview-pane"><div class="preview-heading"><span>PRÉ-VISUALIZAÇÃO</span><span class="sandbox-label">ISOLADA</span></div><iframe id="html-preview" title="Pré-visualização HTML isolada" sandbox="allow-scripts"></iframe></div>
+          </div>
+          <p class="tool-footnote">O conteúdo é executado em um quadro isolado, sem acesso ao Jarves ou aos seus dados. Ainda assim, só execute código em que confia.</p>
+        </section>
+
+        <section class="tab-view tool-view" id="video-view" hidden>
+          <div class="tool-heading">
+            <div>
+              <p class="eyebrow">ESTÚDIO DE ANIMAÇÃO · PROTÓTIPO LOCAL</p>
+              <h1>Anime <span>Studio</span></h1>
+              <p>Planeje uma história com Ollama e produza uma cena 2D original, editável e animada.</p>
+            </div>
+          </div>
+          <div class="video-notice">
+            <strong>O que este protótipo realmente faz</strong>
+            <span>O Ollama pode criar um storyboard textual. A cena abaixo é animada por código no navegador e pode ser baixada como HTML/CSS independente ou exportada como WebM sem áudio. Isto não é geração de vídeo por modelo, sincronização labial nem um episódio completo. O projeto é salvo localmente neste navegador.</span>
+          </div>
+          <section class="anime-studio">
+            <div class="anime-brief">
+              <label for="anime-story">IDEIA ORIGINAL
+                <textarea id="anime-story" maxlength="4000" placeholder="Ex.: Uma aprendiz de astrônoma encontra uma pequena estrela perdida na floresta."></textarea>
+              </label>
+              <div class="anime-actions">
+                <button class="save-button" id="anime-generate-preview" type="button">▶ Gerar animação do texto</button>
+                <button class="secondary-button" id="anime-generate-plan" type="button">✦ Criar storyboard com Ollama</button>
+                <button class="secondary-button" id="anime-save-project" type="button">Salvar projeto JSON</button>
+                <button class="secondary-button" id="anime-restore-backup" type="button">Restaurar versão anterior</button>
+                <span id="anime-plan-status" role="status" aria-live="polite">Gere a prévia local sem modelo ou peça ao Ollama um storyboard editável.</span>
+              </div>
+              <label for="anime-plan">STORYBOARD EDITÁVEL
+                <textarea id="anime-plan" maxlength="12000" placeholder="Gere ou escreva aqui o storyboard."></textarea>
+              </label>
+            </div>
+            <div class="anime-controls">
+              <label>PERSONAGEM<input id="anime-character" maxlength="60" placeholder="Ex.: Uma maga" autocomplete="off"></label>
+              <label>CENÁRIO<input id="anime-setting" maxlength="100" placeholder="Detectado pelo texto" autocomplete="off"></label>
+              <label>AMBIENTE
+                <select id="anime-scene">
+                  <option value="auto">Detectar pelo texto</option>
+                  <option value="forest">Floresta</option>
+                  <option value="magic">Fantasia mágica</option>
+                  <option value="space">Espaço</option>
+                  <option value="ocean">Oceano</option>
+                  <option value="city">Cidade</option>
+                  <option value="desert">Deserto</option>
+                </select>
+              </label>
+              <label>MOVIMENTO
+                <select id="anime-motion">
+                  <option value="auto">Detectar pelo texto</option>
+                  <option value="walk">Caminhar</option>
+                  <option value="run">Correr</option>
+                  <option value="jump">Pular</option>
+                  <option value="fly">Voar</option>
+                  <option value="wave">Acenar</option>
+                  <option value="dance">Dançar</option>
+                  <option value="magic">Fazer magia</option>
+                  <option value="fall">Cair</option>
+                </select>
+              </label>
+              <label>FALA / LEGENDA<input id="anime-dialogue" maxlength="180" placeholder="Usar a descrição como legenda" autocomplete="off"></label>
+              <label>DURAÇÃO <output id="anime-duration-value">10 s</output>
+                <input id="anime-duration" type="range" min="5" max="30" step="1" value="10">
+              </label>
+            </div>
+            <div class="anime-preview-pane">
+              <canvas id="anime-canvas" width="640" height="360" aria-label="Prévia da cena animada"></canvas>
+              <div class="anime-actions">
+                <button class="secondary-button" id="anime-play" type="button">▶ Pré-visualizar cena</button>
+                <button class="secondary-button" id="anime-export-html" type="button">⬇ Baixar animação HTML</button>
+                <button class="save-button" id="anime-export" type="button">⬇ Exportar WebM</button>
+                <span id="anime-render-status" role="status" aria-live="polite">Pronto · 640×360 · 24 FPS · sem áudio.</span>
+              </div>
+            </div>
+          </section>
+          <p class="tool-footnote">O modelo local gratuito pode gerar o storyboard; a prévia Canvas e o arquivo HTML/CSS animado são criados no navegador, sem API paga. A exportação WebM depende do suporte do navegador e não tem áudio. Limite atual: 30 segundos por cena, sem montagem de múltiplas cenas ou renderização 3D.</p>
+          <details class="legacy-video-tool">
+            <summary>Usar vídeo existente com narração do dispositivo</summary>
+            <div class="video-workspace">
+            <section class="video-preview-pane">
+              <label class="save-button file-upload-label" for="video-file-input">＋ Escolher vídeo
+                <input id="video-file-input" type="file" accept="video/*" hidden>
+              </label>
+              <video id="video-preview" controls playsinline preload="metadata" aria-label="Pré-visualização do vídeo"></video>
+              <p class="video-empty" id="video-empty">Escolha um vídeo compatível com seu navegador para ver a prévia.</p>
+              <p class="video-file-name" id="video-file-name"></p>
+            </section>
+            <section class="narration-pane">
+              <label class="narration-label" for="narration-text">ROTEIRO DA NARRAÇÃO</label>
+              <textarea id="narration-text" maxlength="10000" placeholder="Escreva aqui o texto que será narrado…" aria-label="Texto da narração"></textarea>
+              <div class="narration-count"><span id="narration-status" role="status" aria-live="polite">Aguardando roteiro.</span><span id="narration-length">0 / 10000</span></div>
+              <div class="narration-options">
+                <label for="narration-voice">Voz do dispositivo
+                  <select id="narration-voice"></select>
+                </label>
+                <label for="narration-rate">Velocidade <output id="narration-rate-value">1.0×</output>
+                  <input id="narration-rate" type="range" min="0.7" max="1.3" step="0.1" value="1">
+                </label>
+                <label for="narration-volume">Volume <output id="narration-volume-value">100%</output>
+                  <input id="narration-volume" type="range" min="0" max="1" step="0.1" value="1">
+                </label>
+              </div>
+              <div class="narration-actions">
+                <button class="save-button" id="play-video-narration" type="button" disabled>▶ Vídeo + narração</button>
+                <button class="secondary-button" id="play-narration" type="button" disabled>🔊 Ouvir só a voz</button>
+                <button class="secondary-button" id="pause-narration" type="button" disabled>⏸ Pausar</button>
+                <button class="secondary-button" id="stop-narration" type="button" disabled>■ Parar</button>
+              </div>
+            </section>
+          </div>
+          <p class="tool-footnote">A voz é sintetizada pelo dispositivo e reproduzida localmente; o navegador não a incorpora ao vídeo.</p>
+          </details>
+        </section>
+
+        <section class="tab-view tool-view" id="image3d-view" hidden>
+          <div class="tool-heading">
+            <div>
+              <p class="eyebrow">GERAÇÃO COM MODELO LOCAL</p>
+              <h1>Imagem e <span>modelo 3D</span></h1>
+              <p>Descreva sua ideia; o modelo selecionado gera uma ilustração SVG otimizada para resposta rápida ou uma malha OBJ.</p>
+            </div>
+          </div>
+          <div class="artifact-notice">
+            <strong>Gratuito e local</strong>
+            <span>Usa o Ollama e o modelo selecionado; nada é enviado a serviços pagos. Imagens são ilustrações vetoriais SVG e modelos 3D são malhas OBJ simples geradas por texto — não são imagens fotorrealistas nem um modelo especializado de geração 3D.</span>
+          </div>
+          <div class="artifact-prompt">
+            <label for="artifact-prompt">DESCREVA O QUE QUER CRIAR</label>
+            <textarea id="artifact-prompt" maxlength="2000" rows="3" placeholder="Ex.: uma raposa astronauta em estilo geométrico, com cores roxas…" aria-label="Descrição para imagem ou modelo 3D"></textarea>
+            <div class="artifact-actions">
+              <button class="save-button" id="generate-image" type="button">✦ Gerar imagem SVG</button>
+              <button class="secondary-button" id="generate-3d" type="button">◇ Gerar modelo 3D</button>
+              <span id="artifact-status" role="status" aria-live="polite">Selecione um modelo local no topo para começar.</span>
+            </div>
+          </div>
+          <div class="artifact-workspace">
+            <section class="artifact-card">
+              <header><strong>IMAGEM VETORIAL</strong><div class="artifact-downloads"><button class="secondary-button" id="download-svg" type="button" hidden>Baixar SVG</button><button class="secondary-button" id="download-png" type="button" hidden>Baixar PNG</button></div></header>
+              <div class="artifact-preview image-artifact-preview">
+                <p id="image-empty">Sua imagem SVG aparecerá aqui.</p>
+                <img id="image-preview" alt="Imagem vetorial criada pela IA" hidden>
+              </div>
+            </section>
+            <section class="artifact-card">
+              <header><strong>MODELO 3D · OBJ</strong><button class="secondary-button" id="download-obj" type="button" hidden>Baixar OBJ</button></header>
+              <div class="artifact-preview mesh-artifact-preview">
+                <p id="mesh-empty">Seu modelo 3D aparecerá aqui.</p>
+                <canvas id="mesh-preview" aria-label="Pré-visualização interativa do modelo 3D" hidden></canvas>
+              </div>
+              <small class="mesh-help">Arraste para girar · role para aproximar</small>
+            </section>
+          </div>
+          <p class="tool-footnote">A qualidade depende do modelo de linguagem e pode variar. Importe arquivos OBJ em um editor 3D compatível, como o Blender; confira a licença do modelo Ollama antes de redistribuir o conteúdo gerado.</p>
+        </section>
+
+
+        <section class="tab-view tool-view" id="images-view" hidden>
+          <div class="tool-heading">
+            <div>
+              <p class="eyebrow">ESTÚDIO DE CRIAÇÃO LOCAL</p>
+              <h1>Ideias em <span>Imagens</span></h1>
+              <p>Transforme uma ideia em um prompt visual e gere até sete imagens em um lote.</p>
+            </div>
+          </div>
+          <div class="artifact-notice">
+            <strong>Geração real, sem simulação</strong>
+            <span>Este recurso usa um servidor local compatível com Stable Diffusion WebUI ou Forge. Ollama pode refinar o prompt, mas não gera os PNGs. O serviço de imagens precisa estar instalado e configurado no computador que executa o JARVES.</span>
+          </div>
+          <div class="image-studio-grid">
+            <section class="artifact-card image-studio-controls">
+              <h2>Descreva sua ideia</h2>
+              <label for="image-idea">IDEIA ORIGINAL</label>
+              <textarea id="image-idea" maxlength="2000" rows="4" placeholder="Ex.: uma cidade flutuante ao pôr do sol, com jardins suspensos e pequenas luzes mágicas..."></textarea>
+              <label for="image-style">ESTILO VISUAL (OPCIONAL)</label>
+              <input id="image-style" type="text" maxlength="120" placeholder="Pixel art, aquarela, fantasia, anime...">
+              <button class="secondary-button" id="btn-refine-image-prompt" type="button">✧ Refinar ideia com Ollama</button>
+              <label for="image-prompt">PROMPT FINAL</label>
+              <textarea id="image-prompt" maxlength="4000" rows="5" placeholder="O prompt visual aparecerá aqui. Você também pode editá-lo."></textarea>
+              <label for="image-negative">PROMPT NEGATIVO (OPCIONAL)</label>
+              <textarea id="image-negative" maxlength="1000" rows="2" placeholder="Elementos que deseja evitar..."></textarea>
+              <div class="image-studio-options">
+                <label for="image-count">Quantidade<select id="image-count"><option value="1">1 imagem</option><option value="2">2 imagens</option><option value="3">3 imagens</option><option value="4">4 imagens</option><option value="5">5 imagens</option><option value="6">6 imagens</option><option value="7">7 imagens</option></select></label>
+                <label for="image-width">Largura<select id="image-width"><option>512</option><option>640</option><option>768</option><option>1024</option></select></label>
+                <label for="image-height">Altura<select id="image-height"><option>512</option><option>640</option><option>768</option><option>1024</option></select></label>
+                <label for="image-steps">Etapas<select id="image-steps"><option>15</option><option selected>20</option><option>25</option><option>30</option><option>40</option></select></label>
+              </div>
+              <button class="save-button" id="btn-generate-image-batch" type="button">✦ Gerar imagens</button>
+              <p id="image-generation-status" class="tool-footnote" role="status" aria-live="polite">Verificando conexão com o gerador local...</p>
+            </section>
+            <section class="artifact-card image-studio-gallery-panel">
+              <header><strong>GALERIA DE IMAGENS</strong><button class="secondary-button" id="btn-refresh-image-gallery" type="button">Atualizar</button></header>
+              <div id="image-gallery" class="image-gallery-grid" aria-live="polite"><p class="tool-footnote">Suas imagens geradas aparecerão aqui.</p></div>
+            </section>
+          </div>
+          <p class="tool-footnote">A geração usa memória, processamento e armazenamento do computador/servidor. Celulares podem atuar como clientes do JARVES, mas não precisam executar o modelo de imagem localmente. Confira a licença do modelo utilizado antes de redistribuir imagens.</p>
+        </section>
+
+        <section class="tab-view tool-view" id="files-view" hidden>
+          <div class="tool-heading">
+            <div><p class="eyebrow">ARMAZENAMENTO LOCAL</p><h1>Meus <span>arquivos</span></h1><p>Importe TXT e PDF para ler, anexar ao chat ou remover.</p></div>
+            <label class="save-button file-upload-label" for="library-file-input">＋ Adicionar arquivos<input id="library-file-input" type="file" accept=".txt,.pdf,text/plain,application/pdf" multiple hidden></label>
+          </div>
+          <div class="file-notice"><strong>Privacidade e limites</strong><span>Arquivos ficam neste computador. Aceitamos TXT/PDF até 5 MB e extraímos apenas texto; PDFs digitalizados sem texto não funcionam.</span></div>
+          <div class="file-list" id="file-list" aria-live="polite"></div>
+          <p class="empty-files" id="empty-files">Nenhum arquivo armazenado ainda.</p>
+        </section>
+
+        <section class="tab-view tool-view" id="memory-view" hidden>
+          <div class="tool-heading">
+            <div><p class="eyebrow">MEMÓRIA LOCAL AUTORIZADA</p><h1>Memória da <span>IA</span></h1><p>Salve fatos ou preferências manualmente; o uso em cada conversa é opcional.</p></div>
+            <div class="tool-buttons">
+              <button class="secondary-button" id="export-memory" type="button">Exportar JSON</button>
+              <button class="secondary-button" id="import-memory" type="button">Importar JSON</button>
+              <input id="memory-file-input" type="file" accept="application/json,.json" hidden>
+            </div>
+          </div>
+          <div class="file-notice"><strong>Armazenamento privado</strong><span>As memórias ficam no SQLite local. Não há treinamento do modelo: se “Usar memória” estiver marcado, até três itens relevantes entram no contexto da solicitação. Revise e apague os registros quando quiser.</span></div>
+          <form class="memory-form" id="memory-form">
+            <label for="memory-label">Título</label>
+            <input id="memory-label" maxlength="80" required placeholder="Ex.: Preferências de resposta">
+            <label for="memory-content">Informação para lembrar</label>
+            <textarea id="memory-content" maxlength="4000" rows="3" required placeholder="Escreva somente informações que deseja guardar neste computador."></textarea>
+            <button class="save-button" type="submit">Salvar memória</button>
+            <span id="memory-status" role="status" aria-live="polite"></span>
+          </form>
+          <label class="memory-search-label" for="memory-search">Buscar memórias</label>
+          <input class="history-search memory-search" id="memory-search" type="search" maxlength="100" placeholder="Filtrar por título ou conteúdo">
+          <div class="error-history" id="memory-list" aria-live="polite"></div>
+        </section>
+
+        <section class="tab-view tool-view" id="errors-view" hidden>
+          <div class="tool-heading">
+            <div><p class="eyebrow">DIAGNÓSTICO LOCAL</p><h1>Central de <span>erros</span></h1><p>Verificações reais da API, do Ollama e da integridade do banco SQLite.</p></div>
+            <div class="tool-buttons">
+              <button class="secondary-button" id="test-connection" type="button">Testar conexão</button>
+              <button class="secondary-button" id="download-error-report" type="button">Gerar relatório</button>
+              <button class="save-button" id="analyze-errors" type="button">Analisar erros</button>
+            </div>
+          </div>
+          <p class="diagnostic-summary" id="diagnostic-summary" role="status" aria-live="polite">A análise é somente leitura; nenhuma configuração, arquivo ou serviço será alterado.</p>
+          <div class="error-metrics" aria-label="Resumo de erros">
+            <article><span>Erros registrados</span><strong id="error-total">0</strong></article>
+            <article><span>Eventos de rede / API</span><strong id="error-critical">0</strong></article>
+            <article><span>Correções automáticas</span><strong id="error-resolved">0</strong></article>
+          </div>
+          <div class="diagnostic-results" id="diagnostic-results" aria-live="polite"></div>
+          <div class="error-history-heading"><h2>Eventos neste navegador</h2><button class="reset-button" id="clear-error-history" type="button">Limpar histórico local</button></div>
+          <div class="error-history" id="error-history" aria-live="polite"></div>
+          <p class="tool-footnote">Falhas de rede são registradas localmente e não são reenviadas ao servidor. O JARVES não corrige arquivos nem reinicia serviços automaticamente: alterações potencialmente destrutivas exigem autorização explícita.</p>
+        </section>
+
+        <section class="tab-view tool-view" id="logic-view" hidden>
+          <div class="tool-heading">
+            <div><p class="eyebrow">ANÁLISE DETERMINÍSTICA LOCAL</p><h1>Logic Engine <span>Max</span></h1><p>Estrutura solicitações, destaca lacunas e sugere próximos passos sem afirmar que executou ações.</p></div>
+          </div>
+          <div class="file-notice"><strong>Limitação explícita</strong><span>Este módulo usa regras lexicais, não é um modelo de raciocínio. As intenções são hipóteses; fatos externos, código e resultados de testes não são verificados por esta análise.</span></div>
+          <form id="logic-form" class="memory-form">
+            <label for="logic-request">Solicitação para analisar</label>
+            <textarea id="logic-request" maxlength="20000" rows="6" required placeholder="Descreva o objetivo ou cole um pedido em etapas."></textarea>
+            <label for="logic-task-mode">Tipo de análise</label>
+            <select id="logic-task-mode">
+              <option value="chat">Inferir do texto</option>
+              <option value="plan">Planejamento</option>
+              <option value="bug">Diagnóstico de bug</option>
+            </select>
+            <button class="save-button" id="logic-analyze" type="submit">Analisar solicitação</button>
+          </form>
+          <pre class="logic-report" id="logic-report" role="status" aria-live="polite">Nenhuma análise executada.</pre>
+        </section>
+      </main>
+    </div>
+    <dialog class="settings-dialog" id="profile-dialog" aria-labelledby="profile-title">
+      <form class="settings-form" id="profile-form">
+        <header class="settings-header">
+          <div><p class="eyebrow">PERFIL PRIVADO NESTE NAVEGADOR</p><h2 id="profile-title">Meu perfil</h2></div>
+          <button class="dialog-close" id="close-profile" type="button" aria-label="Fechar perfil">×</button>
+        </header>
+        <p class="profile-local-notice">Modo local: não há cadastro, login, servidor de contas nem sincronização. O nome fica no armazenamento local e a foto no IndexedDB deste navegador.</p>
+        <div class="profile-preview" aria-live="polite">
+          <span class="profile-avatar profile-avatar-large" id="profile-preview-avatar" aria-hidden="true"><span id="profile-preview-fallback">U</span><img id="profile-preview-image" alt="" hidden></span>
+          <span id="profile-preview-name">Usuário</span>
+        </div>
+        <label class="setting-block" for="profile-display-name">
+          <span class="setting-heading"><strong>Nome de exibição</strong></span>
+          <input class="wide-setting" id="profile-display-name" maxlength="60" autocomplete="name" required>
+        </label>
+        <label class="setting-block" for="profile-username">
+          <span class="setting-heading"><strong>Nome de usuário</strong></span>
+          <small>Identificação local; use letras, números, ponto, hífen ou sublinhado.</small>
+          <input class="wide-setting" id="profile-username" maxlength="30" minlength="3" pattern="[A-Za-z0-9][A-Za-z0-9._\-]{2,29}" autocomplete="username" required>
+        </label>
+        <label class="setting-block" for="profile-avatar-preset">
+          <span class="setting-heading"><strong>Avatar</strong></span>
+          <select class="wide-setting" id="profile-avatar-preset">
+            <option value="initial">Iniciais</option>
+            <option value="star">⭐ Estrela</option>
+            <option value="fox">🦊 Raposa</option>
+            <option value="robot">🤖 Robô</option>
+            <option value="wizard">🧙 Mago</option>
+            <option value="moon">🌙 Lua</option>
+          </select>
+        </label>
+        <div class="setting-block">
+          <span class="setting-heading"><strong>Foto de perfil</strong></span>
+          <small>Imagem reduzida e armazenada somente neste navegador; máximo de 5 MB no arquivo original.</small>
+          <div class="wallpaper-actions">
+            <input id="profile-photo" type="file" accept="image/*">
+            <button class="reset-button" id="remove-profile-photo" type="button">Remover foto</button>
+          </div>
+          <small id="profile-status" role="status" aria-live="polite"></small>
+        </div>
+        <label class="setting-row" for="profile-accent">
+          <span><strong>Cor do perfil</strong><small>Também define a cor de destaque da interface.</small></span>
+          <input id="profile-accent" type="color" value="#a78bfa">
+        </label>
+        <p class="settings-note">O idioma da interface permanece em português; tradução completa e sincronização entre dispositivos ainda não estão disponíveis.</p>
+        <footer class="settings-actions">
+          <button class="reset-button" id="reset-profile" type="button">Restaurar perfil padrão</button>
+          <div><button class="reset-button" id="cancel-profile" type="button">Cancelar</button> <button class="save-button" type="submit">Salvar alterações</button></div>
+        </footer>
+      </form>
+    </dialog>
+    <dialog class="settings-dialog" id="settings-dialog" aria-labelledby="settings-title">
+      <form class="settings-form" id="settings-form">
+        <header class="settings-header">
+          <div><p class="eyebrow">PREFERÊNCIAS LOCAIS</p><h2 id="settings-title">Personalizar Jarves</h2></div>
+          <button class="dialog-close" id="close-settings" type="button" aria-label="Fechar configurações">×</button>
+        </header>
+        <label class="setting-row" for="setting-theme">
+          <span><strong>Tema</strong><small>Escolha a aparência do assistente</small></span>
+          <select id="setting-theme"><option value="auto">Automático</option><option value="dark">Escuro</option><option value="light">Claro</option><option value="rgb">Neon RGB</option></select>
+        </label>
+        <label class="setting-row" for="setting-accent">
+          <span><strong>Cor de destaque</strong><small>Personalize a cor da interface</small></span>
+          <input id="setting-accent" type="color" value="#a78bfa">
+        </label>
+        <div class="setting-block">
+          <span class="setting-heading"><strong>Temas portáteis</strong></span>
+          <small>Exporte ou importe somente tema e cor. Credenciais, instruções e preferências privadas nunca são incluídas.</small>
+          <div class="wallpaper-actions">
+            <button class="secondary-button" id="export-theme" type="button">Exportar tema JSON</button>
+            <button class="secondary-button" id="import-theme" type="button">Importar tema JSON</button>
+            <input id="theme-file-input" type="file" accept="application/json,.json" hidden>
+          </div>
+        </div>
+        <label class="setting-block" for="setting-timezone">
+          <span class="setting-heading"><strong>Fuso horário do relógio</strong></span>
+          <small>O relógio do topo usa a região escolhida.</small>
+          <select class="wide-setting" id="setting-timezone"></select>
+        </label>
+        <div class="setting-block">
+          <span class="setting-heading"><strong>Foto de fundo</strong></span>
+          <small>Imagem processada e guardada apenas no navegador (máximo 5 MB).</small>
+          <div class="wallpaper-actions"><input id="setting-wallpaper" type="file" accept="image/*"><button class="reset-button" id="remove-wallpaper" type="button">Remover foto</button></div>
+        </div>
+        <label class="setting-block" for="setting-temperature">
+          <span class="setting-heading"><strong>Criatividade</strong><output id="temperature-value">0.7</output></span>
+          <small>Menor valor é mais previsível; maior valor é mais variado.</small>
+          <input id="setting-temperature" type="range" min="0" max="2" step="0.1" value="0.7">
+        </label>
+        <label class="setting-block" for="setting-max-tokens">
+          <span class="setting-heading"><strong>Limite da resposta</strong><output id="tokens-value">2048 tokens</output></span>
+          <small>Limite máximo por resposta (128 a 8192 tokens). O modelo e a memória do dispositivo também impõem limites.</small>
+          <input id="setting-max-tokens" type="range" min="128" max="8192" step="128" value="4096">
+        </label>
+        <label class="setting-block" for="setting-system-prompt">
+          <span class="setting-heading"><strong>Instruções personalizadas</strong></span>
+          <small>Preferência enviada ao modelo junto com cada mensagem.</small>
+          <textarea id="setting-system-prompt" rows="4" maxlength="4000" placeholder="Ex.: responda em português e explique seu raciocínio de forma objetiva."></textarea>
+        </label>
+        <div class="setting-block">
+          <span class="setting-heading"><strong>Criar meu modelo local</strong></span>
+          <small>Cria no Ollama uma variante do modelo selecionado, com nome e instruções próprias. Não treina um modelo do zero.</small>
+          <label for="custom-model-name">Nome do novo modelo</label>
+          <input class="wide-setting" id="custom-model-name" type="text" maxlength="64" pattern="[A-Za-z0-9][A-Za-z0-9._-]*" placeholder="jarves-especialista">
+          <label for="custom-model-prompt">Como esse modelo deve se comportar?</label>
+          <textarea id="custom-model-prompt" rows="3" maxlength="4000" placeholder="Ex.: Você é um assistente de programação que responde em português e explica soluções passo a passo."></textarea>
+          <button class="secondary-button" id="create-custom-model" type="button">Criar com o modelo selecionado</button>
+          <small id="custom-model-status" role="status" aria-live="polite"></small>
+        </div>
+        <label class="setting-block" for="setting-access-token">
+          <span class="setting-heading"><strong>Token para acesso de outro dispositivo</strong></span>
+          <small>Necessário para abrir o Jarves de um celular na rede local. Configure o mesmo segredo em JARVES_ACCESS_TOKEN no servidor.</small>
+          <input class="wide-setting" id="setting-access-token" type="password" maxlength="256" autocomplete="off" placeholder="Cole o token configurado no servidor">
+        </label>
+        <div class="setting-block">
+          <span class="setting-heading"><strong>Leitura em voz alta</strong></span>
+          <small>Usa as vozes disponíveis no seu dispositivo; opções dependem do navegador e do sistema.</small>
+          <div class="voice-settings">
+            <select class="wide-setting" id="setting-voice" aria-label="Voz de leitura"></select>
+            <label for="setting-speech-rate">Velocidade <output id="speech-rate-value">1.0×</output><input id="setting-speech-rate" type="range" min="0.7" max="1.3" step="0.1" value="1"></label>
+          </div>
+        </div>
+        <p class="settings-note">As preferências ficam neste navegador. O modelo selecionado e suas instruções são enviados apenas ao Ollama configurado.</p>
+        <footer class="settings-actions">
+          <button class="reset-button" id="reset-settings" type="button">Restaurar padrão</button>
+          <button class="save-button" type="submit">Salvar preferências</button>
+        </footer>
+      </form>
+    </dialog>
+    <dialog class="settings-dialog" id="file-preview-dialog" aria-labelledby="file-preview-title">
+      <div class="settings-form">
+        <header class="settings-header"><div><p class="eyebrow">ARQUIVO LOCAL</p><h2 id="file-preview-title"></h2></div><button class="dialog-close" id="close-file-preview" type="button" aria-label="Fechar arquivo">×</button></header>
+        <pre class="file-preview-content" id="file-preview-content"></pre>
+        <footer class="settings-actions"><button class="reset-button" id="attach-preview-file" type="button">Usar no chat</button><button class="save-button" id="download-preview-file" type="button">Baixar texto</button></footer>
+      </div>
+    </dialog>
+    <script>
+      if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+    </script>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>

@@ -1,54 +1,68 @@
-# Instalação
+# Instalação do JARVES AI
 
-Instale Python 3.10+, crie um ambiente virtual e instale `requirements.txt`. Instale
-Ollama pelo canal oficial e baixe um modelo cuja licença e requisitos de hardware
-sejam adequados ao seu uso.
+## Linux
 
-Linux/macOS:
-
-```sh
+```bash
 python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install -r requirements.txt
-ollama pull llama3.2
-./scripts/run.sh
+npm ci
+npm run check
+npm test
+npm start
 ```
 
-Windows PowerShell:
+Abra `http://127.0.0.1:8000`.
+
+## Windows PowerShell
 
 ```powershell
-py -m venv .venv
+py -3 -m venv .venv
 .venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
-ollama pull llama3.2
-python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
+npm ci
+npm run check
+npm test
+npm start
 ```
 
-Ollama precisa estar iniciado (no Windows, normalmente é executado pelo aplicativo).
-No Linux, se necessário, execute `ollama serve` em outro terminal antes de iniciar o app.
-Depois, abra `http://127.0.0.1:8000`. O MVP não distribui executáveis nem oferece
-cliente Android.
+Se necessário, defina `JARVES_PYTHON` para apontar ao Python correto.
 
-## Usar pelo celular na rede local
+## Ollama
 
-O layout funciona em telas pequenas. Para permitir que um telefone abra a interface
-no computador, execute o servidor somente em uma rede confiável e proteja os
-endpoints com um segredo:
+Instale e inicie Ollama no computador que executa o backend. Baixe um modelo compatível e selecione-o nas Configurações do JARVES. O modelo não é instalado automaticamente pelo JARVES e não roda dentro do APK.
 
-```sh
-export JARVES_HOST=0.0.0.0
-export JARVES_ACCESS_TOKEN="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
-./scripts/run.sh
+## Geração de imagens
+
+Instale e inicie um serviço local compatível com Stable Diffusion WebUI/Forge, com API habilitada. Defina no ambiente do backend:
+
+```bash
+JARVES_IMAGE_API_URL=http://127.0.0.1:7860
 ```
 
-Descubra o endereço IP local do computador e abra `http://IP-DO-COMPUTADOR:8000` no
-telefone. No Jarves, abra **Configurações**, cole o valor de `JARVES_ACCESS_TOKEN`
-e salve. Não encaminhe essa porta para a internet, não use em Wi-Fi público e não
-trate HTTP como conexão criptografada: o token pode ser interceptado na rede.
-Para instalar a PWA no celular, o navegador exige um endereço HTTPS confiável; o
-projeto não configura certificado TLS automaticamente. O modelo Ollama continua
-rodando no computador.
+Reinicie o JARVES e abra **Ideias em Imagens**. O painel consulta a conexão real; se o serviço estiver ausente, a geração informa indisponibilidade. Até sete imagens PNG podem ser solicitadas por lote. Arquivos são salvos em `data/generated-images/`.
 
-No computador, abra o endereço local em um navegador Chromium compatível e use
-**Instalar app** (quando oferecido) ou o menu do navegador. Os recursos de
-instalação PWA dependem do navegador e de um contexto seguro.
+## Acesso pelo Android na rede local
+
+No computador, em uma rede confiável:
+
+```bash
+JARVES_HOST=0.0.0.0 JARVES_PORT=8000 JARVES_ACCESS_TOKEN="gere-um-token-forte" ./scripts/run.sh
+```
+
+No Android, informe `http://IP-DO-COMPUTADOR:8000` na tela de servidor. Salve o mesmo token em Configurações. A conexão HTTP não é criptografada; não use em Wi-Fi pública e não encaminhe a porta para a internet. O backend e os modelos continuam no computador.
+
+## Desktop
+
+O modo de desenvolvimento usa Python instalado no sistema:
+
+```bash
+npm ci
+npm start
+```
+
+Para empacotar, instale PyInstaller e gere o executável backend com os comandos do README. Copie o executável para `build/backend/` e execute `npm run build:windows` em Windows ou `npm run build:linux` em Linux. Não tente empacotar um alvo Windows em Linux ou vice-versa.
+
+## Android APK
+
+O workflow GitHub Actions compila o APK de debug e publica o arquivo como artefato de execução. O APK não contém Ollama, modelos nem backend. Não há publicação automática em Google Play ou GitHub Releases.

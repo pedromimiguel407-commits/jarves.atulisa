@@ -1,29 +1,28 @@
-# Segurança - JARVES AI
+# Segurança — JARVES AI
 
-## Modelo de segurança
-- Backend Node.js local; frontend estático.
-- Validação de entradas nas rotas.
-- SQL parametrizado (node:sqlite).
-- Escape HTML no frontend (renderização segura).
-- Proteção contra traversal de diretórios em uploads.
-- Limites de tamanho de upload.
-- Timeout em chamadas de IA.
-- Credenciais apenas via .env / settings (não expostas no JS público; API key mascarada na listagem).
+## Arquitetura e limites
 
-## Mudancas da 2.2.1
-- Rotas que editam arquivos exigem ADMIN_TOKEN (header) e ficam restritas a pasta do programa.
-- Pre-visualizacao de arquivos enviados roda em CSP sandbox, isolada da origem do app.
-- CORS so quando CORS_ORIGIN estiver definido. Pesquisa web desligada por padrao.
+O backend ativo é FastAPI/Python. O aplicativo pode iniciar em loopback e atender a clientes na rede local quando configurado. O modo LAN usa HTTP e não criptografa o tráfego; não exponha a porta a redes públicas.
 
-## Limitações
-- Sem autenticação de usuários por padrão (ambiente local).
-- ADMIN_TOKEN opcional para rotas administrativas.
-- Pesquisa web depende de rede e pode falhar.
-- Execução de código gerado não é automática; análise estática apenas.
+## Controles existentes
 
-## Gestão de credenciais
-- Use .env (não commitado). Veja .env.example.
-- Não armazene chaves em memória comum.
+- Validação de payloads com Pydantic.
+- Consultas SQLite parametrizadas.
+- Limites para uploads e extração de documentos.
+- Endpoints de API para clientes não locais exigem token Bearer quando `JARVES_ACCESS_TOKEN` está configurado.
+- Segredos devem ficar em variáveis de ambiente ou em configuração local protegida.
+- A geração de imagens só permite endpoint local ou IP privado explícito configurado no servidor.
+- Arquivos enviados não são executados pelo JARVES.
+
+## Recomendações
+
+- Nunca faça commit de `.env`, tokens, chaves ou dados pessoais.
+- Não coloque tokens em URLs ou parâmetros de consulta.
+- Use firewall e rede Wi-Fi confiável ao habilitar `JARVES_HOST=0.0.0.0`.
+- Faça backup do banco antes de atualizar ou executar migrações.
+- Verifique a licença de cada modelo de IA antes de redistribuir modelos ou conteúdo gerado.
+- Não trate uma conexão HTTP local como canal seguro para internet pública.
 
 ## Comunicação de vulnerabilidades
-- Reporte via issues do projeto ou e-mail do mantenedor.
+
+Abra uma issue privada ou use o mecanismo de reporte de vulnerabilidade do GitHub. Evite publicar detalhes exploráveis antes de uma correção estar disponível.

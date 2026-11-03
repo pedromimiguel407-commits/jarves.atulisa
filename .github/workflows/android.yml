@@ -1,0 +1,69 @@
+name: JARVES Android APK
+
+on:
+  push:
+    branches: ["main", "ai/**"]
+    paths:
+      - "android/**"
+      - "backend/**"
+      - "frontend/**"
+      - "scripts/**"
+      - "requirements*.txt"
+      - ".github/workflows/android.yml"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android-debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager | sort | tail -n 1)"
+          if [ -z "$SDKMANAGER" ]; then
+            echo "sdkmanager was not found under $SDK_ROOT/cmdline-tools" >&2
+            exit 1
+          fi
+          yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses || true
+          "$SDKMANAGER" --sdk_root="$SDK_ROOT" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - name: Set up Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+      - name: Build debug APK
+        run: gradle --no-daemon -p android assembleDebug
+      - name: Test APK on Android 15 emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_2
+          script: |
+            adb logcat -c
+            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            adb shell am start -W -n com.jarves.ai/.DefaultLauncher
+            sleep 8
+            adb shell dumpsys activity activities | grep -E "mResumedActivity|topResumedActivity" | grep -q "com.jarves.ai"
+            if adb logcat -d | grep -E "FATAL EXCEPTION|Process: com.jarves.ai.*has died"; then
+              echo "JARVES encerrou com erro no emulador Android."
+              exit 1
+            fi
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: JARVES-Android-APK-${{ github.sha }}
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
