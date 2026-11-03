@@ -121,7 +121,8 @@ public class MainActivity extends Activity {
         getWindow().setNavigationBarColor(0xFF080D1A);
         buildUi();
         pendingServerUrl = getPreferences(MODE_PRIVATE).getString(KEY_URL, "");
-        loading.setText("Aguardando conexão Wi-Fi...");
+        loading.setText("JARVES AI · modo independente pronto");
+        webView.loadUrl("file:///android_asset/offline.html");
     }
 
     @Override protected void onStart() {
@@ -133,8 +134,8 @@ public class MainActivity extends Activity {
             connectivityManager.registerNetworkCallback(wifiRequest, wifiNetworkCallback);
             networkCallbackRegistered = true;
             Network network = findWifiNetwork();
-            if (network != null) connectToWifiNetwork(network);
-            else loading.setText("Conecte o Android à rede Wi-Fi do computador para localizar o JARVES.");
+            if (network != null && !pendingServerUrl.isEmpty()) connectToWifiNetwork(network);
+            else if (pendingServerUrl.isEmpty()) loading.setText("Modo independente · nenhum computador necessário para abrir o menu.");
         } catch (RuntimeException error) {
             Log.e("JARVES", "Não foi possível acompanhar a conexão Wi-Fi.", error);
         }
@@ -214,8 +215,9 @@ public class MainActivity extends Activity {
             }
             @Override public void onPageFinished(WebView view, String url) {
                 serverUrlLoadPending = false;
-                serverConnected = true;
-                serverConnectionStatus = "connected";
+                boolean localHome = url != null && url.startsWith("file:");
+                serverConnected = !localHome;
+                serverConnectionStatus = localHome ? "offline" : "connected";
                 loading.setVisibility(View.GONE);
             }
             @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
@@ -318,7 +320,6 @@ public class MainActivity extends Activity {
             Log.w("JARVES", "Não foi possível associar o app à rede Wi-Fi ativa.");
         }
         if (!pendingServerUrl.isEmpty()) verifyManualServer(pendingServerUrl);
-        else if (!serverConnected && !serverUrlLoadPending) startDiscovery();
     }
 
     private void verifyManualServer(String serverUrl) {
@@ -654,6 +655,10 @@ public class MainActivity extends Activity {
                 if (speechRecognizer != null) speechRecognizer.cancel();
                 speechStartPending = false;
             });
+        }
+
+        @JavascriptInterface public void openServerSettings() {
+            mainHandler.post(() -> showServerDialog());
         }
 
         @JavascriptInterface public String getServerUrl() {
