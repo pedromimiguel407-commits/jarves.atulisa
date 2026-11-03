@@ -27,6 +27,9 @@ class JarvesApiTests(unittest.TestCase):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertIn("JARVES AI", response.text)
+        self.assertIn("id=\"images-view\"", response.text)
+        self.assertIn("id=\"image-count\"", response.text)
+        self.assertIn("id=\"btn-generate-image-batch\"", response.text)
         self.assertIn("Personalizar Jarves", response.text)
         self.assertIn('id="task-mode"', response.text)
         self.assertIn('id="fast-mode" type="checkbox"', response.text)
@@ -110,6 +113,54 @@ class JarvesApiTests(unittest.TestCase):
         self.assertIn("<span>EXE</span>", downloads.text)
         self.assertIn("<span>APPIMAGE</span>", downloads.text)
         self.assertIn("api.github.com/repos/${repository}/releases", downloads.text)
+
+    def test_image_status_reports_missing_local_provider_without_faking_connection(self) -> None:
+        with patch.object(main, "IMAGE_API_URL", ""):
+            response = self.client.get("/api/images/status")
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.json()["configured"])
+        self.assertFalse(response.json()["connected"])
+
+    def test_image_batch_rejects_more_than_seven_images(self) -> None:
+        response = self.client.post(
+            "/api/images/generate",
+            json={"prompt": "uma cidade pixel art", "count": 8},
+        )
+        self.assertEqual(response.status_code, 422)
+
+    def test_image_batch_only_accepts_private_local_provider_hosts(self) -> None:
+        with patch.object(main, "IMAGE_API_URL", "http://8.8.8.8:7860"):
+            response = self.client.post(
+                "/api/images/generate",
+                json={"prompt": "uma cidade pixel art", "count": 1},
+            )
+        self.assertEqual(response.status_code, 400)
+
+    def test_image_batch_saves_only_images_returned_by_the_provider(self) -> None:
+        import base64
+
+        png = b"\x89PNG\r\n\x1a\n" + (13).to_bytes(4, "big") + b"IHDR" + (1).to_bytes(4, "big") * 2 + b"\x08\x06\x00\x00\x00"
+        encoded = base64.b64encode(png).decode("ascii")
+        with (
+            patch.object(main, "IMAGE_API_URL", "http://127.0.0.1:7860"),
+            patch.object(main, "image_api_request", return_value={"images": [encoded]}),
+        ):
+            response = self.client.post(
+                "/api/images/generate",
+                json={"prompt": "uma cidade pixel art", "count": 3},
+            )
+        self.assertEqual(response.status_code, 200)
+        result = response.json()
+        self.assertEqual(result["requested_count"], 3)
+        self.assertEqual(result["generated_count"], 1)
+        image_id = result["images"][0]["id"]
+        downloaded = self.client.get(f"/api/images/{image_id}/file")
+        self.assertEqual(downloaded.status_code, 200)
+        self.assertTrue(downloaded.content.startswith(b"\x89PNG"))
+        deleted = self.client.delete(f"/api/images/{image_id}")
+        self.assertEqual(deleted.status_code, 200)
+        self.assertTrue(deleted.json()["deleted"])
+        self.assertEqual(self.client.get(f"/api/images/{image_id}/file").status_code, 404)
 
     def test_diagnostics_reports_database_and_ollama_health(self) -> None:
         with patch.object(main, "list_installed_models", return_value=[{"name": "local-model"}]):
