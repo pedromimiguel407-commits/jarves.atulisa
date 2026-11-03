@@ -122,7 +122,7 @@ public class MainActivity extends Activity {
         buildUi();
         pendingServerUrl = getPreferences(MODE_PRIVATE).getString(KEY_URL, "");
         loading.setText("JARVES AI · modo independente pronto");
-        webView.loadUrl("file:///android_asset/offline.html");
+        loadOfflineHome();
     }
 
     @Override protected void onStart() {
@@ -215,7 +215,7 @@ public class MainActivity extends Activity {
             }
             @Override public void onPageFinished(WebView view, String url) {
                 serverUrlLoadPending = false;
-                boolean localHome = url != null && url.startsWith("file:");
+                boolean localHome = url != null && url.startsWith("https://appassets.androidplatform.net/");
                 serverConnected = !localHome;
                 serverConnectionStatus = localHome ? "offline" : "connected";
                 loading.setVisibility(View.GONE);
@@ -264,6 +264,21 @@ public class MainActivity extends Activity {
         setContentView(root);
     }
 
+    private void loadOfflineHome() {
+        try (InputStream input = getAssets().open("offline.html");
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[4096];
+            int count;
+            while ((count = input.read(buffer)) != -1) output.write(buffer, 0, count);
+            String html = output.toString(StandardCharsets.UTF_8.name());
+            webView.loadDataWithBaseURL("https://appassets.androidplatform.net/assets/", html,
+                "text/html", StandardCharsets.UTF_8.name(), null);
+        } catch (Exception error) {
+            Log.e("JARVES", "Não foi possível abrir o menu independente.", error);
+            loading.setText("Falha ao carregar o menu local. Reinstale o APK.");
+        }
+    }
+
     private void showServerDialog() {
         if (serverDialog != null && serverDialog.isShowing()) return;
         final EditText input = new EditText(this);
@@ -279,7 +294,7 @@ public class MainActivity extends Activity {
         AlertDialog dialog = new AlertDialog.Builder(this)
             .setTitle("Conectar ao JARVES AI")
             .setMessage(serverErrorMessage.isEmpty()
-                ? "Não encontrei um servidor JARVES na rede Wi-Fi. Inicie o JARVES no computador na mesma rede ou informe o endereço do servidor."
+                ? "Nenhuma API JARVES foi encontrada. Informe o endereço de uma API disponível ou continue no modo independente do celular."
                 : serverErrorMessage)
             .setView(box)
             .setCancelable(false)
