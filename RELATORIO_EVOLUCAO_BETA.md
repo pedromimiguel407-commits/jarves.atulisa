@@ -45,8 +45,8 @@
 ## Builds
 
 - **Android:** APK debug compilado e enviado como artefato no commit `d8bf7c92e7b95c4067b463d2912c67b990ac123d`. [Workflow e artefato](https://github.com/pedromimiguel407-commits/jarves.atulisa/actions/runs/41552752942).
-- **Linux:** AppImage compilado e enviado como artefato no mesmo commit. [Workflow e artefato](https://github.com/pedromimiguel407-commits/jarves.atulisa/actions/runs/41552752758).
-- **Windows:** um build anterior do instalador NSIS concluiu com sucesso e enviou artefato. A recompilação da branch atual, que inclui o último endurecimento da navegação Electron, está em execução: [Workflow atual](https://github.com/pedromimiguel407-commits/jarves.atulisa/actions/runs/41552993881).
+- **Linux:** AppImage compilado e enviado como artefato no commit `fbc6078021a7821687170cb4f693fa6ad1e64679`. [Workflow e artefato](https://github.com/pedromimiguel407-commits/jarves.atulisa/actions/runs/41552993881).
+- **Windows:** um build anterior do instalador NSIS concluiu com sucesso e enviou artefato. A recompilação da branch atual, que inclui o último endurecimento da navegação Electron, continua em execução: [Workflow atual](https://github.com/pedromimiguel407-commits/jarves.atulisa/actions/runs/41552993881).
 
 Os builds são artefatos de CI, não foram instalados e testados em dispositivos físicos. O APK produzido é de debug, não assinado para publicação na Play Store.
 
