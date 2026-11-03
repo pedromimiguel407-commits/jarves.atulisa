@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.3.9 — atualização de estabilidade e distribuição
+
+- Alinhada a versão do pacote Node, API FastAPI e aplicativo Android para `2.3.9`.
+- `versionCode` Android atualizado para `239`, permitindo atualização sobre a linha anterior `2.3.7`.
+- Builds e testes automatizados da beta anterior confirmados no GitHub Actions; esta versão requer nova execução de CI e recompilação dos três instaladores antes da distribuição.
+- Corrigida a identificação de versão da documentação; a publicação estável depende da revisão e da conclusão dos novos workflows.
+
+
 ## 2.3.7-evolution-beta — branch `ai/evolution-max-2026-11-02`
 
 - Restaurada a marcação HTML compatível com `frontend/app.js`, `frontend/styles.css`, o service worker e os testes existentes; a página substituída anteriormente apontava para recursos e seletores ausentes.
